@@ -4,6 +4,19 @@ make deep_learning a consolidated package (module)
 make it object oriented
 write some nice examples in a separate examples directory that imports this deep_learning package
 
-TODO:
-work on cat logistic regression:
-    fix imports
+
+Question: is compute cost a negligible part of the compute time? Should it be able to be toggled on / off?
+
+
+For tanh:
+W = np.random.randn(<shape>) * np.sqrt(1 / n[l - 1])
+
+For ReLU:
+W = np.random.randn(<shape>) * np.sqrt(2 / n[l - 1])
+
+gradient check:
+epsilon = 10 ** -7
+10 ** -7 (great!)
+10 ** -3 (worry!)
+
+
