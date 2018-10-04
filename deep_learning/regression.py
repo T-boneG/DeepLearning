@@ -4,10 +4,23 @@ Logistic Regression and Linear Regression
 
 from __future__ import division
 import numpy as np
+
+#TODO change this to "import activation_functions" and make them parameters to pass
+#TODO account for the changed format of the activation functions passes the cache back as well
 from activation_functions import sigmoid_af
+
+#TODO force choice of dims on declaration (remove update dims, etc.)
 
 #TODO split to linear and logistic
 
+#TODO (maybe...have both inherit from Regression class:
+"""
+class C(abc.ABC):
+    @abstractmethod
+    def my_abstract_method(self, ...):
+"""
+
+#TODO move the helpers into the class (as class methods that don't take self as a parameter: static?)
 def logistic_forward_propagate(X, w, b):
     """
     :param X: vector of shape (dim, number of samples)
@@ -112,10 +125,7 @@ class LogisticRegression(object):
         A = logistic_forward_propagate(X, self.params['w'], self.params['b'])
 
         # Convert probabilities (A) to actual predictions
-        Y_prediction = (A > 0.5).astype(int)
-
-        #TODO delete this after testing
-        assert (Y_prediction.shape == (1, X.shape[1]))
+        Y_prediction = np.array(A > 0.5).astype(int)
 
         return Y_prediction, A
 

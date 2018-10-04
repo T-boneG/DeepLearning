@@ -6,54 +6,52 @@ Activation functions and their derivatives.
 from __future__ import division
 import numpy as np
 
-#TODO write these functions
+#TODO
+def linear_af(Z):
+    return Z
 
-def linear_af():
-    pass
+def sigmoid_af(Z):
+    A = 1 / (1 + np.exp(-Z))
+    cache = Z
 
-def sigmoid_af(z):
-    """
-    Compute the sigmoid of z
+    return A, cache
 
-    Arguments:
-    z -- A scalar or numpy array of any size
+#TODO
+def tanh_af(Z):
+    raise NotImplementedError
 
-    Return:
-    a -- sigmoid(z)
-    """
+def relu_af(Z):
+    A = np.maximum(0, Z)
+    assert (A.shape == Z.shape)
+    cache = Z
 
-    a = 1 / (1 + np.exp(-z))
+    return A, cache
 
-    return a
+#TODO (refer to relu_backward)
+def linear_backward(X):
+    raise NotImplementedError
 
-def tanh_af():
-    pass
+def sigmoid_backward(dA, cache):
+    Z = cache
 
-def relu_af():
-    pass
+    s = 1 / (1 + np.exp(-Z))
+    dZ = dA * s * (1 - s)
 
-def linear_derivative():
-    pass
+    assert (dZ.shape == Z.shape)
 
-def sigmoid_derivative(x):
-    """
-    Compute the gradient (also called the slope or derivative) of the sigmoid function with respect to its input x.
-    You can store the output of the sigmoid function into variables and then use it to calculate the gradient.
+    return dZ
 
-    Arguments:
-    x -- A scalar or numpy array
+#TODO
+def tanh_backward(x):
+    raise NotImplementedError
 
-    Return:
-    ds -- Your computed gradient.
-    """
+def relu_backward(dA, cache):
+    Z = cache
+    dZ = np.array(dA, copy=True)
 
-    s = sigmoid_af(x)
-    ds = s * (1 - s)
+    # When z <= 0, you should set dz to 0 as well.
+    dZ[Z <= 0] = 0
 
-    return ds
+    assert (dZ.shape == Z.shape)
 
-def tanh_derivative():
-    pass
-
-def relu_derivative():
-    pass
+    return dZ
