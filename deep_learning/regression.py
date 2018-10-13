@@ -6,6 +6,8 @@ from __future__ import division
 import numpy as np
 from activation_functions import sigmoid_af
 
+# TODO add print_cost option and implement
+
 #TODO split to linear and logistic
 #TODO maybe...have both inherit from Regression class:
 """

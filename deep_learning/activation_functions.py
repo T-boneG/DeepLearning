@@ -7,7 +7,8 @@ import sys
 import numpy as np
 
 __all__ = ['linear_af', 'sigmoid_af', 'tanh_af', 'relu_af', 'leaky_relu_af',
-           'linear_backward', 'sigmoid_backward', 'tanh_backward', 'relu_backward', 'leaky_relu_backward']
+           'linear_backward', 'sigmoid_backward', 'tanh_backward', 'relu_backward', 'leaky_relu_backward',
+           'get_activation_function_names']
 
 def linear_af(Z):
     """
@@ -16,27 +17,26 @@ def linear_af(Z):
     the neural network to a logistic or linear regression problem
     """
     A = np.array(Z, copy=True)
-    cache = {'Z': Z}
 
-    return A, cache
+    return A
 
 def sigmoid_af(Z):
     """
     Sigmoid Activation Function
     """
     A = 1 / (1 + np.exp(-Z))
-    cache = {'Z': Z}
+    assert (A.shape == Z.shape)
 
-    return A, cache
+    return A
 
 def tanh_af(Z):
     """
     tanh Activation Function
     """
     A = np.tanh(Z)
-    cache = {'Z': Z}
+    assert (A.shape == Z.shape)
 
-    return A, cache
+    return A
 
 def relu_af(Z):
     """
@@ -44,9 +44,8 @@ def relu_af(Z):
     """
     A = np.maximum(0, Z)
     assert (A.shape == Z.shape)
-    cache = {'Z': Z}
 
-    return A, cache
+    return A
 
 def leaky_relu_af(Z, leak=0.01):
     """
@@ -60,18 +59,14 @@ def leaky_relu_af(Z, leak=0.01):
 
     return A, cache
 
-def linear_backward(dA, cache):
-    Z = cache['Z']
-
+def linear_backward(dA, Z):
     dZ = np.array(dA, copy=True)
 
     assert (dZ.shape == Z.shape)
 
     return dZ
 
-def sigmoid_backward(dA, cache):
-    Z = cache['Z']
-
+def sigmoid_backward(dA, Z):
     s = 1 / (1 + np.exp(-Z))
     dZ = dA * s * (1 - s)
 
@@ -79,9 +74,7 @@ def sigmoid_backward(dA, cache):
 
     return dZ
 
-def tanh_backward(dA, cache):
-    Z = cache['Z']
-
+def tanh_backward(dA, Z):
     s = np.tanh(Z)
     dZ = dA * (1 - s**2)
 
@@ -89,8 +82,7 @@ def tanh_backward(dA, cache):
 
     return dZ
 
-def relu_backward(dA, cache):
-    Z = cache['Z']
+def relu_backward(dA, Z):
     dZ = np.array(dA, copy=True)
 
     dZ[Z <= 0] = 0
@@ -99,8 +91,7 @@ def relu_backward(dA, cache):
 
     return dZ
 
-def leaky_relu_backward(dA, cache, leak=0.01):
-    Z = cache['Z']
+def leaky_relu_backward(dA, Z, leak=0.01):
     dZ = np.array(dA, copy=True)
 
     dZ[Z <= 0] = leak * dZ[Z <= 0]
@@ -109,9 +100,16 @@ def leaky_relu_backward(dA, cache, leak=0.01):
 
     return dZ
 
+def get_activation_function_names():
+    """
+    :return: list of names of activation functions (without postfix '_af' or '_backward')
+    """
+    this_module = sys.modules[__name__]
+    return [x.rsplit('_', 1)[0] for x in dir(this_module) if x.endswith('_af')]
+
 this_module = sys.modules[__name__]
 # assert that there is a matching '_backward' for each '_af'
-activation_function_names = [x.rsplit('_', 1)[0] for x in dir(this_module) if x.endswith('_af')]
+activation_function_names = get_activation_function_names()
 for af_name in activation_function_names:
     assert (af_name + '_backward') in dir(this_module), \
         'missing backward function for activation function %s' % af_name
@@ -134,13 +132,13 @@ if __name__ == '__main__':
         # plot activation function
         plt.subplot(2, 1, 1)
         af = getattr(this_module, af_name + '_af')
-        A, cache = af(Z)
+        A = af(Z)
         plt.plot(Z, A, label=af_name)
 
         # plot backward function
         plt.subplot(2, 1, 2)
         backward = getattr(this_module, af_name + '_backward')
-        dZ = backward(dA, cache)
+        dZ = backward(dA, Z)
         plt.plot(Z, dZ, label=af_name)
 
     plt.subplot(2, 1, 1)

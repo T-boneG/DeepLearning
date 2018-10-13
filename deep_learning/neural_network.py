@@ -5,9 +5,12 @@ Neural Network
 import numpy as np
 import activation_functions
 
+__all__ = ['NeuralNetwork']
+
+# TODO (maybe) merge regularization and backdrop helper functions into the simpler helper functions
+
 class NeuralNetwork(object):
-    # _activation_functions = ['linear', 'sigmoid', 'tanh', 'relu']
-    _activation_functions = [x.rstrip('_af') for x in dir(activation_functions) if x.endswith('_af')]
+    _activation_functions = activation_functions.get_activation_function_names()
 
     ###################
     # Public Methods
@@ -35,7 +38,8 @@ class NeuralNetwork(object):
     def get_params(self):
         return self.params
 
-    def fit(self, X, Y, num_iterations, learning_rate):
+    # TODO add print_cost option and implement
+    def fit(self, X, Y, num_iterations, learning_rate, lambd=0, keep_prob=1):
         """
         This function optimizes w and b by running a gradient descent algorithm
 
@@ -52,7 +56,7 @@ class NeuralNetwork(object):
 
         for i in range(num_iterations):
             # Cost and gradient calculation
-            grads, cost = self._propagate(X, Y)
+            grads, cost = self._propagate(X, Y, lambd, keep_prob)
 
             L = len(self.params) // 2  # number of layers in the neural network
 
@@ -133,7 +137,7 @@ class NeuralNetwork(object):
                                         * np.random.randn(self.layers_dims[l], self.layers_dims[l - 1])
             self.params['b' + str(l)] = np.zeros((self.layers_dims[l], 1))
 
-    def _propagate(self, X, Y):
+    def _propagate(self, X, Y, lambd=0, keep_prob=1):
         """
         Implement the cost function and its gradient for the propagation explained above
 
@@ -148,20 +152,47 @@ class NeuralNetwork(object):
         """
         assert X.shape[0] == self.layers_dims[0]
         assert Y.shape == (1, X.shape[1]), 'invalid input dimensions'
+        assert lambd >= 0
+        assert keep_prob > 0 and keep_prob <= 1
 
-        AL, caches = NeuralNetwork.forward_propagate(X, self.params,
-                                                     hidden_activation=self.hidden_af, final_activation=self.final_af)
+        #TODO (eventually) allow both at the same time
+        assert (lambd == 0 or keep_prob == 1)
 
-        cost = NeuralNetwork.compute_cost(AL, Y)
-
-        grads = NeuralNetwork.backward_propagate(AL, Y, caches,
-                                                 hidden_activation=self.hidden_af, final_activation=self.final_af)
+        if lambd > 0:
+            # propagate with L2 regularization
+            AL, caches = NeuralNetwork.forward_propagate(X, self.params,
+                                                         hidden_activation=self.hidden_af,
+                                                         final_activation=self.final_af)
+            cost = NeuralNetwork.compute_cost_with_regularization(AL, Y, self.params, lambd)
+            grads = NeuralNetwork.backward_propagate_with_regularization(AL, Y, caches, lambd, self.params,
+                                                                         hidden_activation=self.hidden_af,
+                                                                         final_activation=self.final_af)
+        elif keep_prob < 1:
+            # propagate with drop out
+            AL, caches = NeuralNetwork.forward_propagate_with_dropout(X, self.params, keep_prob,
+                                                                      hidden_activation=self.hidden_af,
+                                                                      final_activation=self.final_af)
+            cost = NeuralNetwork.compute_cost(AL, Y)
+            grads = NeuralNetwork.backward_propagate_with_dropout(AL, Y, caches, keep_prob,
+                                                                  hidden_activation=self.hidden_af,
+                                                                  final_activation=self.final_af)
+        else:
+            # standard propagation without regularization
+            AL, caches = NeuralNetwork.forward_propagate(X, self.params,
+                                                         hidden_activation=self.hidden_af,
+                                                         final_activation=self.final_af)
+            cost = NeuralNetwork.compute_cost(AL, Y)
+            grads = NeuralNetwork.backward_propagate(AL, Y, caches,
+                                                     hidden_activation=self.hidden_af,
+                                                     final_activation=self.final_af)
 
         return grads, cost
 
     #########################
     # Static Helper Methods
     #########################
+
+    # Forward Propagation
 
     @staticmethod
     def linear_forward(A, W, b):
@@ -180,7 +211,11 @@ class NeuralNetwork(object):
 
         Z = np.dot(W, A) + b
 
-        cache = (A, W, b)
+        cache = {
+            'A': A,
+            'W': W,
+            'b': b
+        }
 
         return Z, cache
 
@@ -208,11 +243,12 @@ class NeuralNetwork(object):
         assert hasattr(activation_functions, activation + '_af'), 'invalid activation: %s' % activation
         activation_function = getattr(activation_functions, activation + '_af')
 
-        Z, linear_cache = NeuralNetwork.linear_forward(A_prev, W, b)
-        A, activation_cache = activation_function(Z)
+        Z, cache = NeuralNetwork.linear_forward(A_prev, W, b)
+
+        A = activation_function(Z)
+        cache['Z'] = Z
 
         assert (A.shape == (W.shape[0], A_prev.shape[1]))
-        cache = (linear_cache, activation_cache)
 
         return A, cache
 
@@ -233,25 +269,75 @@ class NeuralNetwork(object):
                     every cache of linear_activation_forward() (there are L-1 of them, indexed from 0 to L-1)
         """
 
-        caches = []
+        cache = {}
         A = X
         L = len(parameters) // 2  # number of layers in the neural network
 
         # Implement [LINEAR -> RELU]*(L-1). Add "cache" to the "caches" list.
         for l in range(1, L):
             A_prev = A
-            A, cache = NeuralNetwork.linear_activation_forward(A_prev, parameters['W'+str(l)],
-                                                               parameters['b'+str(l)], hidden_activation)
-            caches.append(cache)
+            A, current_cache = NeuralNetwork.linear_activation_forward(A_prev, parameters['W'+str(l)],
+                                                                       parameters['b'+str(l)], hidden_activation)
+            for key, value in current_cache.items():
+                cache[key + str(l)] = value
 
         # Implement LINEAR -> SIGMOID. Add "cache" to the "caches" list.
-        AL, cache = A, cache = NeuralNetwork.linear_activation_forward(A, parameters['W'+str(L)],
-                                                                       parameters['b'+str(L)], final_activation)
-        caches.append(cache)
+        AL, current_cache = NeuralNetwork.linear_activation_forward(A, parameters['W'+str(L)],
+                                                                    parameters['b'+str(L)], final_activation)
+        for key, value in current_cache.items():
+            cache[key + str(l)] = value
 
         assert (AL.shape == (1, X.shape[1]))
 
-        return AL, caches
+        return AL, cache
+
+    @staticmethod
+    def forward_propagate_with_dropout(X, parameters, keep_prob, hidden_activation='relu', final_activation='sigmoid'):
+        """
+        Implement forward propagation for the [LINEAR->RELU]*(L-1)->LINEAR->SIGMOID computation
+
+        Arguments:
+        X -- data, numpy array of shape (input size, number of examples)
+        parameters -- output of initialize_parameters_deep()
+        hidden_activation -- the activation function for the hidden layers, suggested: 'tanh' OR 'relu'
+        final_activation -- activation function of the final Lth layer, suggested: 'linear' OR 'sigmoid'
+
+        Returns:
+        AL -- last post-activation value
+        caches -- list of caches containing:
+                    every cache of linear_activation_forward() (there are L-1 of them, indexed from 0 to L-1)
+        """
+        cache = {}
+        A = X
+        L = len(parameters) // 2  # number of layers in the neural network
+
+        # Implement [LINEAR -> RELU]*(L-1). Add "cache" to the "caches" list.
+        for l in range(1, L):
+            A_prev = A
+            A, current_cache = NeuralNetwork.linear_activation_forward(A_prev, parameters['W' + str(l)],
+                                                                       parameters['b' + str(l)], hidden_activation)
+
+            for key, value in current_cache.items():
+                cache[key + str(l)] = value
+
+            # apply dropout
+            D = np.random.rand(A.shape[0], A.shape[1])
+            D = (D < keep_prob)
+            A = A * D
+            A = A / keep_prob
+            cache['D' + str(l)] = D
+
+        # Implement LINEAR -> SIGMOID. Add "cache" to the "caches" list.
+        AL, current_cache = NeuralNetwork.linear_activation_forward(A, parameters['W' + str(L)],
+                                                                    parameters['b' + str(L)], final_activation)
+        for key, value in current_cache.items():
+            cache[key + str(l)] = value
+
+        assert (AL.shape == (1, X.shape[1]))
+
+        return AL, cache
+
+    # Cost
 
     @staticmethod
     def compute_cost(AL, Y):
@@ -267,13 +353,30 @@ class NeuralNetwork(object):
         m = Y.shape[1]
 
         # Compute loss from aL and y.
-        logsum = Y * np.log(AL) + (1 - Y) * np.log(1 - AL)
-        cost = (-1 / m) * np.sum(logsum)
+        log_sum = Y * np.log(AL) + (1 - Y) * np.log(1 - AL)
+        cost = (-1 / m) * np.sum(log_sum)
 
         return cost
 
     @staticmethod
-    def linear_backward(dZ, cache):
+    def compute_cost_with_regularization(AL, Y, params, lambd):
+        cost = NeuralNetwork.compute_cost(AL, Y)
+
+        m = Y.shape[1]
+
+        # select W's from params
+        all_Ws = [val for (key, val) in params.items() if key.startswith('W')]
+
+        L2_regularization_cost = (lambd / (2 * m)) * np.sum([np.sum(np.square(W)) for W in [all_Ws]])
+
+        cost = cost + L2_regularization_cost
+
+        return cost
+
+    # Backward Propagation
+
+    @staticmethod
+    def linear_backward(dZ, cache, layer):
         """
         Arguments:
         dZ -- Gradient of the cost with respect to the linear output (of current layer l)
@@ -284,7 +387,9 @@ class NeuralNetwork(object):
         dW -- Gradient of the cost with respect to W (current layer l), same shape as W
         db -- Gradient of the cost with respect to b (current layer l), same shape as b
         """
-        A_prev, W, b = cache
+        A_prev = cache['A' + str(layer-1)]
+        W = cache['W' + str(layer)]
+        # b = cache['b' + str(layer)] # TODO interesting...this isn't used?
         m = A_prev.shape[1]
 
         dW = (1 / m) * np.dot(dZ, A_prev.T)
@@ -294,7 +399,7 @@ class NeuralNetwork(object):
         return dA_prev, dW, db
 
     @staticmethod
-    def linear_activation_backward(dA, cache, activation):
+    def linear_activation_backward(dA, cache, layer, activation):
         """
         Implement the backward propagation for the LINEAR->ACTIVATION layer.
 
@@ -312,18 +417,18 @@ class NeuralNetwork(object):
         dW -- Gradient of the cost with respect to W (current layer l), same shape as W
         db -- Gradient of the cost with respect to b (current layer l), same shape as b
         """
-        linear_cache, activation_cache = cache
-
         assert hasattr(activation_functions, activation + '_backward'), 'invalid activation: %s' % activation
         af_backward = getattr(activation_functions, activation + '_backward')
 
-        dZ = af_backward(dA, activation_cache)
-        dA_prev, dW, db = NeuralNetwork.linear_backward(dZ, linear_cache)
+        Z = cache['Z' + str(layer)]
+
+        dZ = af_backward(dA, Z)
+        dA_prev, dW, db = NeuralNetwork.linear_backward(dZ, cache, layer)
 
         return dA_prev, dW, db
 
     @staticmethod
-    def backward_propagate(AL, Y, caches, hidden_activation='relu', final_activation='sigmoid'):
+    def backward_propagate(AL, Y, cache, hidden_activation='relu', final_activation='sigmoid'):
         """
         Implement the backward propagation for the [LINEAR->RELU] * (L-1) -> LINEAR -> SIGMOID group
 
@@ -341,26 +446,102 @@ class NeuralNetwork(object):
                  grads["db" + str(l)] = ...
         """
         grads = {}
-        L = len(caches)  # the number of layers
-        m = AL.shape[1]
+        # the number of layers (find the number of weight matrices)
+        L = len([key for key in cache.keys() if key.startswith('W') and len(key) == 2])
         Y = Y.reshape(AL.shape)  # after this line, Y is the same shape as AL
 
         # Initializing the back propagation
         dAL = - (np.divide(Y, AL) - np.divide(1 - Y, 1 - AL))
 
         # Lth layer (SIGMOID -> LINEAR) gradients.
-        current_cache = caches[-1]
-        grads["dA" + str(L - 1)], grads['dW' + str(L)], grads['db' + str(L)] = \
-            NeuralNetwork.linear_activation_backward(dAL, current_cache, final_activation)
+        grads['dA' + str(L - 1)], grads['dW' + str(L)], grads['db' + str(L)] = \
+            NeuralNetwork.linear_activation_backward(dAL, cache, L, final_activation)
 
         # Loop from l=L-2 to l=0
         for l in reversed(range(L - 1)):
             # lth layer: (RELU -> LINEAR) gradients.
-            current_cache = caches[l]
             dA_prev_temp, dW_temp, db_temp = \
-                NeuralNetwork.linear_activation_backward(grads['dA' + str(l + 1)], current_cache, hidden_activation)
-            grads["dA" + str(l)] = dA_prev_temp
-            grads["dW" + str(l + 1)] = dW_temp
-            grads["db" + str(l + 1)] = db_temp
+                NeuralNetwork.linear_activation_backward(grads['dA' + str(l + 1)], cache, l+1, hidden_activation)
+            grads['dA' + str(l)] = dA_prev_temp
+            grads['dW' + str(l+1)] = dW_temp
+            grads['db' + str(l+1)] = db_temp
+
+        return grads
+
+    @staticmethod
+    def backward_propagate_with_regularization(AL, Y, cache, lambd, params,
+                                               hidden_activation='relu', final_activation='sigmoid'):
+        """
+        Implements the backward propagation of our baseline model to which we added an L2 regularization.
+
+        Arguments:
+        X -- input dataset, of shape (input size, number of examples)
+        Y -- "true" labels vector, of shape (output size, number of examples)
+        cache -- cache output from forward_propagation()
+        lambd -- regularization hyperparameter, scalar
+
+        Returns:
+        gradients -- A dictionary with the gradients with respect to each parameter, activation and pre-activation variables
+        """
+
+        grads = NeuralNetwork.backward_propagate(AL, Y, cache,
+                                                 hidden_activation=hidden_activation, final_activation=final_activation)
+
+        m = AL.shape[1]
+        # the number of layers (find the number of weight matrices)
+        L = len([key for key in cache.keys() if key.startswith('W') and len(key) == 2])
+
+        for l in range(L):
+            grads['dW' + str(l+1)] = grads['dW' + str(l+1)] + (lambd / m) * params['W' + str(l+1)]
+
+        return grads
+
+    @staticmethod
+    def backward_propagate_with_dropout(AL, Y, cache, keep_prob, hidden_activation='relu', final_activation='sigmoid'):
+        """
+        Implement the backward propagation for the [LINEAR->RELU] * (L-1) -> LINEAR -> SIGMOID group
+
+        Arguments:
+        AL -- probability vector, output of the forward propagation (L_model_forward())
+        Y -- true "label" vector (containing 0 if non-cat, 1 if cat)
+        caches -- list of caches containing:
+                    every cache of linear_activation_forward() with "relu" (it's caches[l], for l in range(L-1) i.e l = 0...L-2)
+                    the cache of linear_activation_forward() with "sigmoid" (it's caches[L-1])
+
+        Returns:
+        grads -- A dictionary with the gradients
+                 grads["dA" + str(l)] = ...
+                 grads["dW" + str(l)] = ...
+                 grads["db" + str(l)] = ...
+        """
+        grads = {}
+        # the number of layers (find the number of weight matrices)
+        L = len([key for key in cache.keys() if key.startswith('W') and len(key) == 2])
+        Y = Y.reshape(AL.shape)  # after this line, Y is the same shape as AL
+
+        # Initializing the back propagation
+        dAL = - (np.divide(Y, AL) - np.divide(1 - Y, 1 - AL))
+
+        # Lth layer (SIGMOID -> LINEAR) gradients.
+        grads['dA' + str(L-1)], grads['dW' + str(L)], grads['db' + str(L)] = \
+            NeuralNetwork.linear_activation_backward(dAL, cache, L, final_activation)
+
+        # apply dropout
+        D = cache['D' + str(L-1)]
+        grads['dA' + str(L-1)] = grads['dA' + str(L-1)] * D / keep_prob
+
+        # Loop from l=L-2 to l=0
+        for l in reversed(range(L - 1)):
+            # lth layer: (RELU -> LINEAR) gradients.
+            dA_prev_temp, dW_temp, db_temp = \
+                NeuralNetwork.linear_activation_backward(grads['dA' + str(l + 1)], cache, l+1, hidden_activation)
+
+            # apply dropout
+            D = cache['D' + str(l)]
+            dA_prev_temp = dA_prev_temp * D / keep_prob
+
+            grads['dA' + str(l)] = dA_prev_temp
+            grads['dW' + str(l+1)] = dW_temp
+            grads['db' + str(l+1)] = db_temp
 
         return grads
