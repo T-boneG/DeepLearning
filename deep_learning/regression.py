@@ -6,10 +6,9 @@ from __future__ import division
 import numpy as np
 from activation_functions import sigmoid_af
 
-# TODO add print_cost option and implement
-
 #TODO split to linear and logistic
 #TODO maybe...have both inherit from Regression class:
+#TODO implement linear regression and softmax
 """
 class C(abc.ABC):
     @abstractmethod
@@ -28,7 +27,7 @@ class LogisticRegression(object):
     def get_params(self):
         return self.params
 
-    def fit(self, X, Y, num_iterations, learning_rate):
+    def fit(self, X, Y, num_iterations, learning_rate, print_cost=False):
         """
         This function optimizes w and b by running a gradient descent algorithm
 
@@ -54,6 +53,9 @@ class LogisticRegression(object):
             self.params['b'] = self.params['b'] - learning_rate * grads['db']
 
             costs.append(cost)
+
+            if print_cost and (i % 1000 == 0):
+                print('%5d: %7.4f' % (i, cost))
 
         return costs
 
@@ -163,7 +165,7 @@ class LogisticRegression(object):
         assert (isinstance(b, float) or isinstance(b, int))
 
         Z = np.dot(w.T, X) + b
-        A, _ = sigmoid_af(Z)
+        A = sigmoid_af(Z)
 
         return A
 

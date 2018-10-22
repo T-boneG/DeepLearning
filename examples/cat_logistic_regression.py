@@ -42,7 +42,7 @@ def show_example_image(index):
     plt.show()
 
 # Example of a picture
-# show_example_image(1)
+show_example_image(1)
 
 # Reshape the training and test examples
 train_set_x_flatten = train_set_x_orig.reshape(train_set_x_orig.shape[0], -1).T
@@ -52,12 +52,14 @@ test_set_x_flatten = test_set_x_orig.reshape(test_set_x_orig.shape[0], -1).T
 train_set_x = train_set_x_flatten/255.
 test_set_x = test_set_x_flatten/255.
 
+input_dim = train_set_x.shape[0]
+
 #################################################
 # Classifier Training and Analysis
 #################################################
 
 # Create classifier
-clf = LogisticRegression()
+clf = LogisticRegression(input_dim)
 
 learning_rate = 0.005
 num_iterations = 8000
@@ -87,7 +89,7 @@ num_iterations = 1500
 print('training multiple learning rates...')
 plt.figure()
 for cur_learning_rate in learning_rates:
-    new_clf = LogisticRegression()
+    new_clf = LogisticRegression(input_dim)
 
     cur_costs = new_clf.fit(train_set_x, train_set_y, num_iterations=num_iterations, learning_rate=cur_learning_rate)
 

@@ -27,6 +27,7 @@ Continue:
 -momentum
 -adam (same as momentum but change values of beta1, beta2)
 -learning rate decay
+-create examples for: logistic regression, softmax, linear regression
 
 
 
@@ -34,5 +35,7 @@ Minibatch Gradient Descrent with Momentum
  - Common values for beta range from 0.8 to 0.999.
  - If you don't feel inclined to tune this, beta=0.9 is often a reasonable default.
  - TODO add default values and warning for weird values (and maybe option to suppress warnings)
+
+
 
 

@@ -55,9 +55,8 @@ def leaky_relu_af(Z, leak=0.01):
 
     A = np.maximum(leak*Z, Z)
     assert (A.shape == Z.shape)
-    cache = {'Z': Z}
 
-    return A, cache
+    return A
 
 def linear_backward(dA, Z):
     dZ = np.array(dA, copy=True)
@@ -122,8 +121,6 @@ for bf_name in backward_function_names:
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
-
-    print('testing activation functions...')
 
     Z = np.linspace(-5, 5, 1000)
     dA = np.ones(Z.shape)
