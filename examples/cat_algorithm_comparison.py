@@ -1,9 +1,7 @@
 """
 NN cat example
 
-layers_dims = [12288, 20, 7, 5, 1] #  4-layer model
-learning_rate = 0.0075
-num_iterations = 3000
+Compares logistic regression with multiple neural network architectures with multiple learning rates
 """
 
 from __future__ import division
@@ -56,7 +54,7 @@ input_dim = train_set_x.shape[0]
 # Learning
 #################################################
 
-num_iterations = 8000
+num_iterations = 2000
 
 learning_rate = 0.005
 

@@ -1,12 +1,5 @@
 """
 Neural Network
-
-1
-(12, 12288)
-(12, 12288)
-2
-(5, 12)
-(5, 12288)
 """
 
 from __future__ import division

@@ -1,4 +1,7 @@
-"""Example of Logistic Regression"""
+"""
+Example of Logistic Regression
+"""
+
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
