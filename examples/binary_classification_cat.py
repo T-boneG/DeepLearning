@@ -15,6 +15,8 @@ import os, sys
 # print(os.path.abspath(os.path.dirname(sys.argv[0])))
 sys.path.append(os.path.split(os.path.abspath(os.path.dirname(sys.argv[0])))[0])
 from deep_learning.linear_disciminant_function import *
+from deep_learning.neural_network import *
+from deep_learning import activation_functions
 
 def load_dataset():
     train_dataset = h5py.File('data/train_catvnoncat.h5', "r")
@@ -80,17 +82,27 @@ def train_and_plot(clf, label, train_set_x, train_set_y, test_set_x, test_set_y,
 
 plt.figure()
 
-clf = LinearDiscriminantFunction(n_x, n_y, logistic_regression_model)
 learning_rate = 0.005
 num_iterations = 1000
+
+clf = LinearDiscriminantFunction(n_x, n_y, logistic_regression_model)
 label = 'LogRegLDF'
 train_and_plot(clf, label, train_set_x, train_set_y, test_set_x, test_set_y, num_iterations, learning_rate)
 
-clf = LinearDiscriminantFunction(n_x, n_y, perceptron_model)
-learning_rate = 0.005
-num_iterations = 1000
-label = 'PerceptronLDF'
+# clf = LinearDiscriminantFunction(n_x, n_y, perceptron_model)
+# label = 'PerceptronLDF'
 # train_and_plot(clf, label, train_set_x, train_set_y, test_set_x, test_set_y, num_iterations, learning_rate)
+
+nn_model = {
+    'check_inputs': check_inputs_binary_classification,
+    'prediction': binary_classification_prediction,
+    'final_activation_and_cost': cost_functions.SigmoidCrossEntropy(),
+    'hidden_activation': activation_functions.ReluActivation()
+}
+layer_dims = [n_x, 12, 5, n_y]
+clf = NeuralNetwork(layer_dims, nn_model)
+label = 'LogRegNN'
+train_and_plot(clf, label, train_set_x, train_set_y, test_set_x, test_set_y, num_iterations, learning_rate)
 
 plt.title(('Comparison of Classifiers'))
 plt.legend(loc='best')

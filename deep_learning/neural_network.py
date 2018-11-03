@@ -48,6 +48,7 @@ class NeuralNetwork(object):
 
         if 'hidden_activation' in model.keys() and model['hidden_activation'] is not None:
             self.hidden_activation = model['hidden_activation']
+            assert isinstance(self.hidden_activation, activation_functions._HiddenActivation)
         else:
             # must be a linear discriminant function if there is no hidden activation
             assert self.get_num_layers() == 1
@@ -148,12 +149,12 @@ class NeuralNetwork(object):
         self.parameters = {}
         L = self.get_num_layers()
 
-        if self.hidden_activation == activation_functions.tanh_af:
+        if isinstance(self.hidden_activation, activation_functions.TanhActivation):
             scale_factor = 1.
-        elif self.hidden_activation == activation_functions.relu_af:
+        elif isinstance(self.hidden_activation, activation_functions.ReluActivation):
             scale_factor = 2.
         else:
-            raise NotImplementedError
+            raise NotImplementedError, 'unknown Xavier initialization scale factor for this activation function'
 
         for l in range(1, L+1):
             self.parameters['W' + str(l)] = np.sqrt(scale_factor / self.layer_dims[l - 1]) \
@@ -252,7 +253,7 @@ class NeuralNetwork(object):
             #     cache['D' + str(l)] = D
 
         # Implement LINEAR -> SIGMOID. Add "cache" to the "caches" list.
-        ZL = NeuralNetwork._linear_forward(A, self.parameters['W' + str(L)], self.parameters['b' + str(L)], L)
+        ZL = self._linear_forward(A, self.parameters['W' + str(L)], self.parameters['b' + str(L)], L)
 
         assert ZL.shape[1] == X.shape[1]
 
@@ -378,7 +379,7 @@ class NeuralNetwork(object):
                      activation and pre-activation variables
         """
 
-        gradients = NeuralNetwork._backward_propagate(AL, Y, L, cache, keep_prob,
+        gradients = self._backward_propagate(AL, Y, L, cache, keep_prob,
                                                       hidden_activation=hidden_activation,
                                                       final_activation=final_activation)
 
