@@ -58,6 +58,18 @@ def leaky_relu_af(Z, leak=0.01):
 
     return A
 
+def softmax_af(Z):
+    """
+    Softmax Activation Function
+    """
+    shiftZ = Z - np.max(Z)
+    exps = np.exp(shiftZ)
+    return exps / np.sum(exps)
+
+    assert (A.shape == Z.shape)
+
+    return A
+
 def linear_backward(dA, Z):
     dZ = np.array(dA, copy=True)
 
@@ -66,16 +78,16 @@ def linear_backward(dA, Z):
     return dZ
 
 def sigmoid_backward(dA, Z):
-    s = 1 / (1 + np.exp(-Z))
-    dZ = dA * s * (1 - s)
+    A = sigmoid_af(Z)
+    dZ = dA * A * (1 - A)
 
     assert (dZ.shape == Z.shape)
 
     return dZ
 
 def tanh_backward(dA, Z):
-    s = np.tanh(Z)
-    dZ = dA * (1 - s**2)
+    A = tanh_af(Z)
+    dZ = dA * (1 - A**2)
 
     assert (dZ.shape == Z.shape)
 
@@ -94,6 +106,21 @@ def leaky_relu_backward(dA, Z, leak=0.01):
     dZ = np.array(dA, copy=True)
 
     dZ[Z <= 0] = leak * dZ[Z <= 0]
+
+    assert (dZ.shape == Z.shape)
+
+    return dZ
+
+def softmax_backward(dA, Z):
+    #TODO CONTINUE HERE
+    """
+    So...the final activation is pretty tied with the cost. Many calculations of dZ bypass dA.
+    Perhaps I need a function that computes (A, cost, dZ)
+    If so, make another function to simply compute A, and use that function in the above function
+
+    """
+    # CORRECT ANSWER!
+    return A - Y
 
     assert (dZ.shape == Z.shape)
 
