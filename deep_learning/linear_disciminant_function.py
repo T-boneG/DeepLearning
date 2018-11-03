@@ -4,9 +4,38 @@ Logistic Regression and Linear Regression
 
 from __future__ import division
 import numpy as np
-from utils import *
+from model_helpers import *
+import cost_functions
 
-#TODO implement batch processing
+"""Binary Classification Models"""
+
+logistic_regression_model = {
+    'check_inputs': check_inputs_binary_classification,
+    'prediction': binary_classification_prediction,
+    'final_activation_and_cost': cost_functions.SigmoidCrossEntropy()
+}
+
+perceptron_model = {
+    'check_inputs': check_inputs_binary_classification,
+    'prediction': binary_classification_prediction,
+    'final_activation_and_cost': cost_functions.SigmoidPerceptron()
+}
+
+"""Multi-class Classification Models"""
+
+softmax_regression_model = {
+    'check_inputs': check_inputs_multiclass_classification,
+    'prediction': multiclass_prediction,
+    'final_activation_and_cost': cost_functions.SoftmaxCrossEntropy()
+}
+
+"""Linear Regression Models"""
+
+mse_linear_regression_model = {
+    'check_inputs': check_inputs_no_constraints,
+    'prediction': linear_regression_prediction,
+    'final_activation_and_cost': cost_functions.LinearMinimumSquareError()
+}
 
 class LinearDiscriminantFunction(object):
     """description..."""
@@ -17,18 +46,16 @@ class LinearDiscriminantFunction(object):
         self.n_x = n_x
         self.n_y = n_y
 
-        self.final_activation = model['final_activation']
-        self.compute_cost = model['compute_cost']
-        #TODO get this function from the knowledge of the other parameters
-        self.backward_propagate = model['backward_propagate']
         self.check_inputs = model['check_inputs']
         self.prediction = model['prediction']
+        self.faac = model['final_activation_and_cost']
 
         self._initialize_params()
 
     def get_params(self):
         return self.params
 
+    # TODO implement batch processing
     def fit(self, X, Y, num_iterations, learning_rate, print_cost=False):
         """
         This function optimizes w and b by running a gradient descent algorithm
@@ -76,8 +103,8 @@ class LinearDiscriminantFunction(object):
         '''
         assert X.shape[0] == self.n_x, 'invalid input vector dimension: %d. Expected: %d' % (X.shape[0], self.n_x)
 
-        Z = LinearDiscriminantFunction.forward_propagate(X, self.params['W'], self.params['b'])
-        A = self.final_activation(Z)
+        Z = self.forward_propagate(X, self.params['W'], self.params['b'])
+        A = self.faac.final_activation(Z)
 
         Y_prediction = self.prediction(A)
 
@@ -113,12 +140,11 @@ class LinearDiscriminantFunction(object):
         }
 
     def _propagate(self, X, Y):
-        Z = LinearDiscriminantFunction.forward_propagate(X, self.params['W'], self.params['b'])
-        A = self.final_activation(Z)
+        Z = self.forward_propagate(X, self.params['W'], self.params['b'])
 
-        cost = self.compute_cost(Y, A)
+        cost, A, dZ = self.faac.final_activation_and_cost(Y, Z)
 
-        dW, db = self.backward_propagate(X, Y, A)
+        dW, db = self.linear_backward(X, dZ)
 
         grads = {'dW': dW,
                  'db': db}
@@ -143,7 +169,6 @@ class LinearDiscriminantFunction(object):
 
         return Z
 
-    #TODO use this
     @staticmethod
     def linear_backward(X, dZ):
         m = X.shape[1]

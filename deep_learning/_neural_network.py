@@ -6,26 +6,17 @@ from __future__ import division
 
 import numpy as np
 import activation_functions
-from utils import *
 
 __all__ = ['NeuralNetwork']
-
-example_model = {
-    'final_activation': activation_functions.sigmoid_af,
-    'compute_cost': logistic_regression_cost,
-    'backward_propagate': None,
-    'check_inputs': check_inputs_binary_classification,
-    'prediction': binary_classification_prediction,
-    # neural network specific model parameters
-    'hidden_activation': activation_functions.relu_af
-}
 
 class NeuralNetwork(object):
     _activation_functions = activation_functions.get_activation_function_names()
 
-    """Public Methods"""
+    ###################
+    # Public Methods
+    ###################
 
-    def __init__(self, layer_dims, model):
+    def __init__(self, layer_dims, hidden_af='relu', final_af='sigmoid'):
         """
 
         :param layer_dims: dimensions of each layer.
@@ -37,14 +28,10 @@ class NeuralNetwork(object):
         """
         self.layer_dims = np.array(layer_dims).copy()
 
-        self.final_activation = model['final_activation']
-        self.compute_cost = model['compute_cost']
-        #TODO get this function from the knowledge of the other parameters
-        self.backward_propagate = model['backward_propagate']
-        self.check_inputs = model['check_inputs']
-        self.prediction = model['prediction']
-
-        self.hidden_activation = model['hidden_activation']
+        self.hidden_af = hidden_af.lower()
+        assert self.hidden_af in NeuralNetwork._activation_functions
+        self.final_af= final_af.lower()
+        assert self.final_af in NeuralNetwork._activation_functions
 
         self._initialize_params()
 
@@ -57,7 +44,7 @@ class NeuralNetwork(object):
     def get_num_layers(self):
         return len(self.layer_dims) - 1
 
-    def fit(self, X, Y, num_iterations, learning_rate, print_cost=False):
+    def fit(self, X, Y, num_iterations, learning_rate, lambd=0, keep_prob=1, print_cost=False):
         """
         This function optimizes W and b by running a gradient descent algorithm
 
@@ -78,7 +65,7 @@ class NeuralNetwork(object):
 
         for i in range(num_iterations):
             # Cost and gradient calculation
-            grads, cost = self._propagate(X, Y)
+            grads, cost = self._propagate(X, Y, lambd, keep_prob)
 
             L = len(self.params) // 2  # number of layers in the neural network
 
@@ -94,7 +81,6 @@ class NeuralNetwork(object):
 
         return costs
 
-    #TODO
     def predict(self, X):
         '''
         predict the output Y for a given input X
@@ -108,16 +94,14 @@ class NeuralNetwork(object):
         '''
         assert X.shape[0] == self.layer_dims[0]
 
-        ZL, _ = NeuralNetwork.forward_propagate(X, self.get_num_layers(), self.params, keep_prob=1,
-                                                hidden_activation=self.hidden_activation)
-        AL = self.final_activation(ZL)
+        AL, _ = NeuralNetwork.forward_propagate(X, self.get_num_layers(), self.params, keep_prob=1,
+                                                hidden_activation=self.hidden_af, final_activation=self.final_af)
 
         # Convert probabilities (A) to actual predictions
-        Y_prediction = self.prediction(AL)
+        Y_prediction = np.array(AL > 0.5).astype(int)
 
         return Y_prediction, AL
 
-    #TODO
     def score(self, X, Y):
         """
         compute prediction accuracy
@@ -132,7 +116,9 @@ class NeuralNetwork(object):
         correct = np.sum(Y_prediction == Y)
         return correct / Y.shape[1]
 
-    """Private Methods"""
+    ###################
+    # Private Methods
+    ###################
 
     def _initialize_params(self):
         """
@@ -141,9 +127,9 @@ class NeuralNetwork(object):
         self.params = {}
         L = self.get_num_layers()
 
-        if self.hidden_activation == activation_functions.tanh_af:
+        if self.hidden_af == 'tanh':
             scale_factor = 1.
-        elif self.hidden_activation == activation_functions.relu_af:
+        elif self.hidden_af == 'relu':
             scale_factor = 2.
         else:
             raise NotImplementedError
@@ -153,8 +139,15 @@ class NeuralNetwork(object):
                                         * np.random.randn(self.layer_dims[l], self.layer_dims[l - 1])
             self.params['b' + str(l)] = np.zeros((self.layer_dims[l], 1))
 
-    #TODO
-    def _propagate(self, X, Y):
+    def _propagate(self, X, Y, lambd=0, keep_prob=1):
+        assert X.shape[0] == self.layer_dims[0]
+        assert Y.shape == (1, X.shape[1]), 'invalid input dimensions'
+        assert lambd >= 0
+        assert keep_prob > 0 and keep_prob <= 1
+
+        #TODO (eventually) allow both at the same time
+        assert (lambd == 0 or keep_prob == 1)
+
         AL, cache = NeuralNetwork.forward_propagate(X, self.get_num_layers(), self.params, keep_prob,
                                                     hidden_activation=self.hidden_af, final_activation=self.final_af)
 
@@ -166,7 +159,9 @@ class NeuralNetwork(object):
 
         return grads, cost
 
-    """Static Helper Methods"""
+    #########################
+    # Static Helper Methods
+    #########################
 
     # Forward Propagation
 
@@ -197,7 +192,7 @@ class NeuralNetwork(object):
         return Z, cache
 
     @staticmethod
-    def linear_activation_forward(A_prev, W, b, layer, activation_function):
+    def linear_activation_forward(A_prev, W, b, layer, activation):
         """
         Implement the forward propagation for the LINEAR->ACTIVATION layer
 
@@ -206,12 +201,20 @@ class NeuralNetwork(object):
         W -- weights matrix: numpy array of shape (size of current layer, size of previous layer)
         b -- bias vector, numpy array of shape (size of the current layer, 1)
         layer -- current layer number
-        activation -- the activation function to be used in this layer
+        activation -- the activation to be used in this layer, stored as a text string:
+                        must be the prefix to a function in activation_functions that ends with: '_af'
+                        examples:
+                            for function linear_af, input: 'linear'
+                            for function sigmoid_af, input: 'sigmoid'
 
         Returns:
         A -- the output of the activation function, also called the post-activation value
         cache -- a python dictionary containing 'A', 'W', 'b', 'Z'; stored for computing the backward pass efficiently
         """
+
+        assert hasattr(activation_functions, activation + '_af'), 'invalid activation: %s' % activation
+        activation_function = getattr(activation_functions, activation + '_af')
+
         Z, cache = NeuralNetwork.linear_forward(A_prev, W, b, layer)
 
         A = activation_function(Z)
@@ -221,7 +224,6 @@ class NeuralNetwork(object):
 
         return A, cache
 
-    #TODO
     @staticmethod
     def forward_propagate(X, L, parameters, keep_prob, hidden_activation, final_activation):
         """
@@ -268,8 +270,45 @@ class NeuralNetwork(object):
 
         assert AL.shape[1] == X.shape[1]
 
-        #TODO this needs to return ZL instead
         return AL, cache
+
+    # Cost
+
+    @staticmethod
+    def compute_cost(AL, Y):
+        """
+        Arguments:
+        AL -- probability vector corresponding to your label predictions, shape (1, number of examples)
+        Y -- true "label" vector (for example: containing 0 if non-cat, 1 if cat), shape (1, number of examples)
+
+        Returns:
+        cost -- cross-entropy cost
+        """
+
+        m = Y.shape[1]
+
+        # Compute loss from aL and y.
+        log_sum = Y * np.log(AL) + (1 - Y) * np.log(1 - AL)
+        cost = (-1 / m) * np.sum(log_sum)
+
+        return cost
+
+    @staticmethod
+    def compute_cost_with_regularization(AL, Y, params, lambd):
+        cost = NeuralNetwork.compute_cost(AL, Y)
+
+        # apply L2 regularization
+        if lambd != 0:
+            m = Y.shape[1]
+
+            # select W's from params
+            all_Ws = [val for (key, val) in params.items() if key.startswith('W')]
+
+            L2_regularization_cost = (lambd / (2 * m)) * np.sum([np.sum(np.square(W)) for W in all_Ws])
+
+            cost = cost + L2_regularization_cost
+
+        return cost
 
     # Backward Propagation
 
@@ -291,8 +330,8 @@ class NeuralNetwork(object):
         b = cache['b' + str(layer)]
         m = A_prev.shape[1]
 
-        dW = 1 / m * np.dot(dZ, A_prev.T)
-        db = 1 / m * np.sum(dZ, axis=1, keepdims=True)
+        dW = (1 / m) * np.dot(dZ, A_prev.T)
+        db = (1 / m) * np.sum(dZ, axis=1, keepdims=True)
         dA_prev = np.dot(W.T, dZ)
 
         #TODO debug this
@@ -303,20 +342,27 @@ class NeuralNetwork(object):
         return dA_prev, dW, db
 
     @staticmethod
-    def linear_activation_backward(dA, cache, layer, af_backward):
+    def linear_activation_backward(dA, cache, layer, activation):
         """
         Implement the backward propagation for the LINEAR->ACTIVATION layer.
 
         Arguments:
         dA -- post-activation gradient for current layer l
         cache -- tuple of values (linear_cache, activation_cache) we store for computing backward propagation efficiently
-        af_backward -- the activation backward function
+        activation -- the activation to be used in this layer, stored as a text string:
+                        must be the prefix to a function in activation_functions that ends with: '_backward'
+                        examples:
+                            for function linear_backward, input: 'linear'
+                            for function sigmoid_backward, input: 'sigmoid'
 
         Returns:
         dA_prev -- Gradient of the cost with respect to the activation (of the previous layer l-1), same shape as A_prev
         dW -- Gradient of the cost with respect to W (current layer l), same shape as W
         db -- Gradient of the cost with respect to b (current layer l), same shape as b
         """
+        assert hasattr(activation_functions, activation + '_backward'), 'invalid activation: %s' % activation
+        af_backward = getattr(activation_functions, activation + '_backward')
+
         Z = cache['Z' + str(layer)]
 
         dZ = af_backward(dA, Z)
@@ -324,7 +370,6 @@ class NeuralNetwork(object):
 
         return dA_prev, dW, db
 
-    #TODO
     @staticmethod
     def backward_propagate(AL, Y, L, cache, keep_prob, hidden_activation, final_activation):
         """
@@ -349,7 +394,7 @@ class NeuralNetwork(object):
         Y = Y.reshape(AL.shape)
 
         # Initializing the back propagation
-        dAL = np.divide(1 - Y, 1 - AL) - np.divide(Y, AL)
+        dAL = - (np.divide(Y, AL) - np.divide(1 - Y, 1 - AL))
 
         # Lth layer (SIGMOID -> LINEAR) gradients.
         gradients['dA' + str(L - 1)], gradients['dW' + str(L)], gradients['db' + str(L)] = \
@@ -377,7 +422,6 @@ class NeuralNetwork(object):
 
         return gradients
 
-    #TODO
     @staticmethod
     def backward_propagate_with_regularization(AL, Y, L, cache, lambd, params, keep_prob,
                                                hidden_activation, final_activation):
