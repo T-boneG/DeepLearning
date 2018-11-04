@@ -1,9 +1,15 @@
+"""
+
+"""
+
+from __future__ import division
 from abc import ABCMeta, abstractmethod
 import numpy as np
-from activation_functions import *
-from model_helpers import binary_classification_prediction
+from utils import *
+import warnings
 
 __all__ = ['SigmoidCrossEntropy', 'SigmoidPerceptron', 'SoftmaxCrossEntropy', 'LinearMinimumSquareError']
+
 
 class _FinalActivationAndCost:
     __metaclass__ = ABCMeta
@@ -40,7 +46,7 @@ class SigmoidCrossEntropy(_FinalActivationAndCost):
         AL = self.final_activation(ZL)
 
         # compute cost
-        cost = -1 / m * np.sum(Y * np.log(AL) + (1 - Y) * np.log(1 - AL))
+        cost = -1 / m * np.sum(np.multiply(Y, stable_log(AL)) + np.multiply(1 - Y, stable_log(1 - AL)))
 
         # # compute partial derivatives (don't delete for reference)
         # dAL = np.divide(1 - Y, 1 - AL) - np.divide(Y, AL)
@@ -56,18 +62,29 @@ class SigmoidPerceptron(_FinalActivationAndCost):
     Sigmoid final activation with Perceptron cost function
       Use for binary classification
       Y is of dim (1, number of samples) and each element is a label: 0 or 1
+
+    NOTE: the perceptron algorithm is effectively the limit of Cross Entropy as learning_rate -> infinity
+        it is invariant to constant scaling of the learning_rate
+        and Cross Entropy is a strictly better algorithm (I think?)
+
+    NOTE: furthermore, (this isn't too important but...) the cost is linearly scaled by the learning_rate
+
     :param Y: labels
     :param ZL: final layer linear output
     :return:
         cost: ...
         AL: final activation function output
         dZL: partial derivative of cost w.r.t. the final linear output
+
     """
+    def __init__(self):
+        warnings.warn('the perceptron algorithm is effectively the limit of Cross Entropy as learning_rate -> infinity'
+                      '\n it is invariant to constant scaling of the learning_rate'
+                      '\n and Cross Entropy is a strictly better algorithm (I think?)')
 
     def final_activation(self, ZL):
         return sigmoid(ZL)
 
-    # TODO debug this (clearly not working)
     def final_activation_and_cost(self, Y, ZL):
         assert Y.shape == ZL.shape, 'inconsistent shapes %s != %s' % (str(Y.shape), str(ZL.shape))
 
@@ -76,14 +93,14 @@ class SigmoidPerceptron(_FinalActivationAndCost):
         # compute final activation
         AL = self.final_activation(ZL)
 
-        Y_prediction = binary_classification_prediction(AL)
+        Y_prediction = ZL > 0
         misclassified_indicator = np.logical_xor(Y, Y_prediction)
 
         # compute cost
-        cost = -1 / m * np.sum(np.abs(ZL) * misclassified_indicator.T)
+        cost = 1 / m * np.sum(np.abs(ZL) * misclassified_indicator)
 
         # compute partial derivative
-        dZL = (2 * Y - 1) * misclassified_indicator
+        dZL = -(2 * Y - 1) * misclassified_indicator
 
         return cost, AL, dZL
 
@@ -111,7 +128,7 @@ class SoftmaxCrossEntropy(_FinalActivationAndCost):
         AL = self.final_activation(ZL)
 
         # compute cost
-        cost = -1 / m * np.sum(Y * np.log(AL))
+        cost = -1 / m * np.sum(Y * stable_log(AL))
 
         # compute partial derivative
         dZL = AL - Y
@@ -142,7 +159,7 @@ class LinearMinimumSquareError(_FinalActivationAndCost):
         AL = ZL
 
         # compute cost
-        cost = -1 / m * np.sum((AL - Y) ** 2)
+        cost = 1 / m * np.sum((AL - Y) ** 2)
 
         # compute partial derivative
         dZL = 2 * (AL - Y)

@@ -7,15 +7,17 @@ import numpy as np
 from model_helpers import *
 import cost_functions
 
+# __all__ = ['LinearDiscriminantFunction']
+
 """Binary Classification Models"""
 
-logistic_regression_model = {
+logistic_regression_LDF_model = {
     'check_inputs': check_inputs_binary_classification,
     'prediction': binary_classification_prediction,
     'final_activation_and_cost': cost_functions.SigmoidCrossEntropy()
 }
 
-perceptron_model = {
+perceptron_LDF_model = {
     'check_inputs': check_inputs_binary_classification,
     'prediction': binary_classification_prediction,
     'final_activation_and_cost': cost_functions.SigmoidPerceptron()
@@ -23,7 +25,7 @@ perceptron_model = {
 
 """Multi-class Classification Models"""
 
-softmax_regression_model = {
+softmax_regression_LDF_model = {
     'check_inputs': check_inputs_multiclass_classification,
     'prediction': multiclass_prediction,
     'final_activation_and_cost': cost_functions.SoftmaxCrossEntropy()
@@ -31,7 +33,7 @@ softmax_regression_model = {
 
 """Linear Regression Models"""
 
-mse_linear_regression_model = {
+mse_linear_regression_LDF_model = {
     'check_inputs': check_inputs_no_constraints,
     'prediction': linear_regression_prediction,
     'final_activation_and_cost': cost_functions.LinearMinimumSquareError()
@@ -50,9 +52,9 @@ class LinearDiscriminantFunction(object):
         self.prediction = model['prediction']
         self.faac = model['final_activation_and_cost']
 
-        self._initialize_params()
+        self._initialize_parameters()
 
-    def get_params(self):
+    def get_parameters(self):
         return self.params
 
     # TODO implement batch processing
@@ -124,13 +126,13 @@ class LinearDiscriminantFunction(object):
 
         Y_prediction, _ = self.predict(X)
 
-        correct = np.sum(Y_prediction == Y)
+        correct = np.sum(np.equal(Y_prediction, Y))
 
         return correct / Y.shape[1]
 
     """Private Methods"""
 
-    def _initialize_params(self):
+    def _initialize_parameters(self):
         W = np.zeros((self.n_y, self.n_x))
         b = np.zeros((self.n_y, 1))
 

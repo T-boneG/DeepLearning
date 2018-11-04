@@ -1,3 +1,6 @@
-#TODO formalize imports (remove * notation)
-from .activation_functions import *
-# import regression
+from utils import *
+from model_helpers import *
+import activation_functions
+import cost_functions
+from linear_disciminant_function import *
+from neural_network import *

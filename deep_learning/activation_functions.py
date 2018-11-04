@@ -7,16 +7,7 @@ import sys
 from abc import ABCMeta, abstractmethod
 import numpy as np
 
-__all__ = ['sigmoid', 'softmax',
-           'LinearActivation', 'SigmoidActivation', 'TanhActivation', 'ReluActivation', 'LeakyReluActivation']
-
-def sigmoid(Z):
-    return 1 / (1 + np.exp(-Z))
-
-def softmax(Z):
-    shiftZ = Z - np.max(Z)
-    exps = np.exp(shiftZ)
-    return exps / np.sum(exps)
+__all__ = ['LinearActivation', 'SigmoidActivation', 'TanhActivation', 'ReluActivation', 'LeakyReluActivation']
 
 class _HiddenActivation:
     __metaclass__ = ABCMeta

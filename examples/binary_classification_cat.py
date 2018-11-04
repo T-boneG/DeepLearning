@@ -82,16 +82,28 @@ def train_and_plot(clf, label, train_set_x, train_set_y, test_set_x, test_set_y,
 
 plt.figure()
 
-learning_rate = 0.005
+learning_rate = 0.01
 num_iterations = 1000
 
-clf = LinearDiscriminantFunction(n_x, n_y, logistic_regression_model)
+clf = LinearDiscriminantFunction(n_x, n_y, perceptron_LDF_model)
+label = 'PerceptronLDF'
+train_and_plot(clf, label, train_set_x, train_set_y, test_set_x, test_set_y, num_iterations, learning_rate)
+
+clf = LinearDiscriminantFunction(n_x, n_y, logistic_regression_LDF_model)
 label = 'LogRegLDF'
 train_and_plot(clf, label, train_set_x, train_set_y, test_set_x, test_set_y, num_iterations, learning_rate)
 
-# clf = LinearDiscriminantFunction(n_x, n_y, perceptron_model)
+# layer_dims = [n_x, n_y]
+# clf = NeuralNetwork(layer_dims, logistic_regression_NN_model)
+# label = 'LogRegLDF'
+# # train_and_plot(clf, label, train_set_x, train_set_y, test_set_x, test_set_y, num_iterations, learning_rate)
+#
+# layer_dims = [n_x, n_y]
+# clf = NeuralNetwork(layer_dims, perceptron_NN_model)
 # label = 'PerceptronLDF'
 # train_and_plot(clf, label, train_set_x, train_set_y, test_set_x, test_set_y, num_iterations, learning_rate)
+
+
 
 nn_model = {
     'check_inputs': check_inputs_binary_classification,
@@ -102,7 +114,7 @@ nn_model = {
 layer_dims = [n_x, 12, 5, n_y]
 clf = NeuralNetwork(layer_dims, nn_model)
 label = 'LogRegNN'
-train_and_plot(clf, label, train_set_x, train_set_y, test_set_x, test_set_y, num_iterations, learning_rate)
+# train_and_plot(clf, label, train_set_x, train_set_y, test_set_x, test_set_y, num_iterations, learning_rate)
 
 plt.title(('Comparison of Classifiers'))
 plt.legend(loc='best')

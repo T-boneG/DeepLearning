@@ -4,11 +4,12 @@ Neural Network
 
 from __future__ import division
 import numpy as np
+from utils import *
 from model_helpers import *
 import activation_functions
 import cost_functions
 
-__all__ = ['NeuralNetwork']
+# __all__ = ['NeuralNetwork']
 
 example_model = {
     'check_inputs': check_inputs_binary_classification,
@@ -24,6 +25,41 @@ ldf_example_model = {
     'final_activation_and_cost': cost_functions.SigmoidCrossEntropy()
     # can assign 'hidden_activation' to None, but not necessary
 }
+
+"""Binary Classification Models"""
+
+logistic_regression_NN_model = {
+    'check_inputs': check_inputs_binary_classification,
+    'prediction': binary_classification_prediction,
+    'final_activation_and_cost': cost_functions.SigmoidCrossEntropy(),
+    'hidden_activation': activation_functions.ReluActivation()
+}
+
+perceptron_NN_model = {
+    'check_inputs': check_inputs_binary_classification,
+    'prediction': binary_classification_prediction,
+    'final_activation_and_cost': cost_functions.SigmoidPerceptron(),
+    'hidden_activation': activation_functions.ReluActivation()
+}
+
+"""Multi-class Classification Models"""
+
+softmax_regression_NN_model = {
+    'check_inputs': check_inputs_multiclass_classification,
+    'prediction': multiclass_prediction,
+    'final_activation_and_cost': cost_functions.SoftmaxCrossEntropy(),
+    'hidden_activation': activation_functions.ReluActivation()
+}
+
+"""Linear Regression Models"""
+
+mse_linear_regression_NN_model = {
+    'check_inputs': check_inputs_no_constraints,
+    'prediction': linear_regression_prediction,
+    'final_activation_and_cost': cost_functions.LinearMinimumSquareError(),
+    'hidden_activation': activation_functions.ReluActivation()
+}
+
 
 class NeuralNetwork(object):
     """description..."""
@@ -53,7 +89,7 @@ class NeuralNetwork(object):
             # must be a linear discriminant function if there is no hidden activation
             assert self.get_num_layers() == 1
 
-        self._initialize_params()
+        self._initialize_parameters()
         self._clear_cache()
 
     def get_parameters(self):
@@ -142,7 +178,7 @@ class NeuralNetwork(object):
 
     """Private Methods"""
 
-    def _initialize_params(self):
+    def _initialize_parameters(self):
         """
         initialize parameters using Xavier initialization
         """
