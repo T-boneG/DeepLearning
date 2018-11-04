@@ -1,15 +1,29 @@
 """
+cost_functions.py
+a collection of Cost Function classes that inherit from a common _FinalActivationAndCost abstract base class.
 
+ Each class implements:
+  final_activation(ZL) - the final activation
+    :param ZL: the final linear activation
+  final_activation_and_cost(Y, ZL)
+    :param Y: the true labels
+    :param ZL: the final linear activation
+    :return:
+      cost - the cost function output
+      AL - the final activation
+      dZL - the gradients w.r.t. the final linear activation ZL
 """
 
+from __future__ import absolute_import
 from __future__ import division
+from __future__ import print_function
 from abc import ABCMeta, abstractmethod
 import numpy as np
-from utils import *
 import warnings
 
-__all__ = ['SigmoidCrossEntropy', 'SigmoidPerceptron', 'SoftmaxCrossEntropy', 'LinearMinimumSquareError']
+from .utils import stable_log, sigmoid, softmax
 
+__all__ = ['SigmoidCrossEntropy', 'SigmoidPerceptron', 'SoftmaxCrossEntropy', 'LinearMinimumSquareError']
 
 class _FinalActivationAndCost:
     __metaclass__ = ABCMeta
@@ -27,17 +41,19 @@ class SigmoidCrossEntropy(_FinalActivationAndCost):
     Sigmoid final activation with Cross Entropy cost function
       Use for binary classification
       Y is of dim (1, number of samples) and each element is a label: 0 or 1
-    :param Y: labels
-    :param ZL: final layer linear output
-    :return:
-        cost: ...
-        AL: final activation function output
-        dZL: partial derivative of cost w.r.t. the final linear output
     """
     def final_activation(self, ZL):
         return sigmoid(ZL)
 
     def final_activation_and_cost(self, Y, ZL):
+        """
+        :param Y: labels of dim (1, number of samples)
+        :param ZL: final layer linear output
+        :return:
+            cost: ...
+            AL: final activation function output
+            dZL: partial derivative of cost w.r.t. the final linear output
+        """
         assert Y.shape == ZL.shape, 'inconsistent shapes %s != %s' % (str(Y.shape), str(ZL.shape))
 
         m = Y.shape[1]
@@ -68,14 +84,6 @@ class SigmoidPerceptron(_FinalActivationAndCost):
         and Cross Entropy is a strictly better algorithm (I think?)
 
     NOTE: furthermore, (this isn't too important but...) the cost is linearly scaled by the learning_rate
-
-    :param Y: labels
-    :param ZL: final layer linear output
-    :return:
-        cost: ...
-        AL: final activation function output
-        dZL: partial derivative of cost w.r.t. the final linear output
-
     """
     def __init__(self):
         warnings.warn('the perceptron algorithm is effectively the limit of Cross Entropy as learning_rate -> infinity'
@@ -86,6 +94,14 @@ class SigmoidPerceptron(_FinalActivationAndCost):
         return sigmoid(ZL)
 
     def final_activation_and_cost(self, Y, ZL):
+        """
+        :param Y: labels of dim (1, number of samples)
+        :param ZL: final layer linear output
+        :return:
+            cost: ...
+            AL: final activation function output
+            dZL: partial derivative of cost w.r.t. the final linear output
+        """
         assert Y.shape == ZL.shape, 'inconsistent shapes %s != %s' % (str(Y.shape), str(ZL.shape))
 
         m = Y.shape[1]
@@ -109,17 +125,19 @@ class SoftmaxCrossEntropy(_FinalActivationAndCost):
     Softmax final activation with Cross Entropy cost function
       Use for multi-class classification
       Y is of dim (number of classes, number of samples) and each column is a one-hot vector
-    :param Y: labels
-    :param ZL: final layer linear output
-    :return:
-        cost: ...
-        AL: final activation function output
-        dZL: partial derivative of cost w.r.t. the final linear output
     """
     def final_activation(self, ZL):
         return softmax(ZL, axis=0)
 
     def final_activation_and_cost(self, Y, ZL):
+        """
+        :param Y: labels of dim (1, number of samples)
+        :param ZL: final layer linear output
+        :return:
+            cost: ...
+            AL: final activation function output
+            dZL: partial derivative of cost w.r.t. the final linear output
+        """
         assert Y.shape == ZL.shape, 'inconsistent shapes %s != %s' % (str(Y.shape), str(ZL.shape))
 
         m = Y.shape[1]
@@ -140,17 +158,19 @@ class LinearMinimumSquareError(_FinalActivationAndCost):
     Linear final activation with Mean Squared Error cost function
       Use for linear regression
       Y is of dim (output dim, number of samples)
-    :param Y: labels
-    :param ZL: final layer linear output
-    :return:
-        cost: ...
-        AL: final activation function output
-        dZL: partial derivative of cost w.r.t. the final linear output
     """
     def final_activation(self, ZL):
         return ZL
 
     def final_activation_and_cost(self, Y, ZL):
+        """
+        :param Y: labels of dim (1, number of samples)
+        :param ZL: final layer linear output
+        :return:
+            cost: ...
+            AL: final activation function output
+            dZL: partial derivative of cost w.r.t. the final linear output
+        """
         assert Y.shape == ZL.shape, 'inconsistent shapes %s != %s' % (str(Y.shape), str(ZL.shape))
 
         m = Y.shape[1]
@@ -159,24 +179,24 @@ class LinearMinimumSquareError(_FinalActivationAndCost):
         AL = ZL
 
         # compute cost
-        cost = 1 / m * np.sum((AL - Y) ** 2)
+        cost = 1 / m * np.sum(np.power(AL - Y, 2))
 
         # compute partial derivative
         dZL = 2 * (AL - Y)
 
         return cost, AL, dZL
 
-#TODO lamda function? how to generate a function that only takes (Y, A, params) as inputs
-def compute_cost_with_regularization(Y, A, params, cost_function, lambd):
-    cost = cost_function(A, Y)
-
-    m = Y.shape[1]
-
-    # select W's from params
-    all_Ws = [val for (key, val) in params.items() if key.startswith('W')]
-
-    L2_regularization_cost = (lambd / (2 * m)) * np.sum([np.sum(np.square(W)) for W in all_Ws])
-
-    cost = cost + L2_regularization_cost
-
-    return cost
+# #TODO lamda function? how to generate a function that only takes (Y, A, params) as inputs
+# def compute_cost_with_regularization(Y, A, params, cost_function, lambd):
+#     cost = cost_function(A, Y)
+#
+#     m = Y.shape[1]
+#
+#     # select W's from params
+#     all_Ws = [val for (key, val) in params.items() if key.startswith('W')]
+#
+#     L2_regularization_cost = (lambd / (2 * m)) * np.sum([np.sum(np.square(W)) for W in all_Ws])
+#
+#     cost = cost + L2_regularization_cost
+#
+#     return cost

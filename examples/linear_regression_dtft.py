@@ -1,5 +1,5 @@
 """
-Idea to try learning an FFT using a linear regression and/or NN
+Idea to try learning a DTFT using a linear regression and/or NN
 
 To compute correct energy:    X = 1/N      * fft(x)
 To preserve energy (unitary): X = 1/N**0.5 * fft(x)
@@ -15,7 +15,9 @@ import pandas as pd
 import os, sys
 # print(os.path.abspath(os.path.dirname(sys.argv[0])))
 sys.path.append(os.path.split(os.path.abspath(os.path.dirname(sys.argv[0])))[0])
-from deep_learning import *
+from deep_learning.linear_disciminant_function import LinearDiscriminantFunction
+from deep_learning.neural_network import NeuralNetwork
+from deep_learning import activation_functions, cost_functions
 import time
 
 """Create the function (DTFT) to be learned"""
@@ -56,6 +58,10 @@ n_x = train_set_x.shape[0]
 n_y = train_set_y.shape[0]
 
 print('training LDF...')
+mse_linear_regression_LDF_model = {
+    'model_type': 'linear_regression',
+    'final_activation_and_cost': cost_functions.LinearMinimumSquareError()
+}
 clf = LinearDiscriminantFunction(n_x, n_y, mse_linear_regression_LDF_model)
 tic = time.time()
 costs = clf.fit(train_set_x, train_set_y, num_iterations, learning_rate)
@@ -66,6 +72,11 @@ b = clf.get_parameters()['b']
 
 print('training NN-LDF...')
 layer_dims = [n_x, n_y]
+mse_linear_regression_NN_model = {
+    'model_type': 'linear_regression',
+    'hidden_activation': activation_functions.ReluActivation(),
+    'final_activation_and_cost': cost_functions.LinearMinimumSquareError()
+}
 clf = NeuralNetwork(layer_dims, mse_linear_regression_NN_model)
 tic = time.time()
 costs = clf.fit(train_set_x, train_set_y, num_iterations, learning_rate)

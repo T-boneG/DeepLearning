@@ -8,8 +8,9 @@ import os, sys
 # print(os.path.abspath(os.path.dirname(sys.argv[0])))
 sys.path.append(os.path.split(os.path.abspath(os.path.dirname(sys.argv[0])))[0])
 from deep_learning.utils import one_hot, one_hot_inverse
-from deep_learning.linear_disciminant_function import *
-from deep_learning.neural_network import *
+from deep_learning.linear_disciminant_function import LinearDiscriminantFunction
+from deep_learning.neural_network import NeuralNetwork
+from deep_learning import cost_functions, activation_functions
 
 """load and view data"""
 
@@ -69,11 +70,20 @@ plt.figure()
 learning_rate = 0.01
 num_iterations = 2000
 
+softmax_regression_LDF_model = {
+    'model_type': 'multiclass_classification',
+    'final_activation_and_cost': cost_functions.SoftmaxCrossEntropy()
+}
 clf = LinearDiscriminantFunction(n_x, n_y, softmax_regression_LDF_model)
 label = 'SoftmaxLDF'
 train_and_plot(clf, label, x_train, y_train, x_test, y_test, num_iterations, learning_rate)
 
 layer_dims = [n_x, 12, n_y]
+softmax_regression_NN_model = {
+    'model_type': 'multiclass_classification',
+    'hidden_activation': activation_functions.ReluActivation(),
+    'final_activation_and_cost': cost_functions.SoftmaxCrossEntropy()
+}
 clf = NeuralNetwork(layer_dims, softmax_regression_NN_model)
 label = 'SoftmaxNN'
 train_and_plot(clf, label, x_train, y_train, x_test, y_test, num_iterations, learning_rate)

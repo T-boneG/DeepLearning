@@ -12,9 +12,9 @@ from scipy import ndimage
 import os, sys
 # print(os.path.abspath(os.path.dirname(sys.argv[0])))
 sys.path.append(os.path.split(os.path.abspath(os.path.dirname(sys.argv[0])))[0])
-from deep_learning.linear_disciminant_function import *
-from deep_learning.neural_network import *
-from deep_learning import activation_functions
+from deep_learning.linear_disciminant_function import LinearDiscriminantFunction
+from deep_learning.neural_network import NeuralNetwork
+from deep_learning import activation_functions, cost_functions
 
 """Data Preparation"""
 
@@ -95,12 +95,21 @@ clf = LinearDiscriminantFunction(n_x, n_y, perceptron_LDF_model)
 label = 'PerceptronLDF'
 train_and_plot(clf, label, train_set_x, train_set_y, test_set_x, test_set_y, num_iterations, learning_rate)
 
+logistic_regression_LDF_model = {
+    'model_type': 'binary_classification',
+    'final_activation_and_cost': cost_functions.SigmoidCrossEntropy()
+}
 clf = LinearDiscriminantFunction(n_x, n_y, logistic_regression_LDF_model)
 label = 'LogRegLDF'
 train_and_plot(clf, label, train_set_x, train_set_y, test_set_x, test_set_y, num_iterations, learning_rate)
 
 # layer_dims = [n_x, n_y]
 layer_dims = [n_x, 12, 5, n_y]
+logistic_regression_NN_model = {
+    'model_type': 'binary_classification',
+    'hidden_activation': activation_functions.ReluActivation(),
+    'final_activation_and_cost': cost_functions.SigmoidCrossEntropy()
+}
 clf = NeuralNetwork(layer_dims, logistic_regression_NN_model)
 label = 'LogRegNN ' + '-'.join(str(s) for s in layer_dims[1:-1])
 train_and_plot(clf, label, train_set_x, train_set_y, test_set_x, test_set_y, num_iterations, learning_rate)
