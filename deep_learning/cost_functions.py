@@ -117,7 +117,7 @@ class SoftmaxCrossEntropy(_FinalActivationAndCost):
         dZL: partial derivative of cost w.r.t. the final linear output
     """
     def final_activation(self, ZL):
-        return softmax(ZL)
+        return softmax(ZL, axis=0)
 
     def final_activation_and_cost(self, Y, ZL):
         assert Y.shape == ZL.shape, 'inconsistent shapes %s != %s' % (str(Y.shape), str(ZL.shape))

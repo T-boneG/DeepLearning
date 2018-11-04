@@ -4,7 +4,7 @@ Logistic Regression and Linear Regression
 
 from __future__ import division
 import numpy as np
-from model_helpers import *
+import model_helpers
 import cost_functions
 
 # __all__ = ['LinearDiscriminantFunction']
@@ -12,30 +12,21 @@ import cost_functions
 """Binary Classification Models"""
 
 logistic_regression_LDF_model = {
-    'check_inputs': check_inputs_binary_classification,
-    'prediction': binary_classification_prediction,
+    'model_type': 'binary_classification',
     'final_activation_and_cost': cost_functions.SigmoidCrossEntropy()
-}
-
-perceptron_LDF_model = {
-    'check_inputs': check_inputs_binary_classification,
-    'prediction': binary_classification_prediction,
-    'final_activation_and_cost': cost_functions.SigmoidPerceptron()
 }
 
 """Multi-class Classification Models"""
 
 softmax_regression_LDF_model = {
-    'check_inputs': check_inputs_multiclass_classification,
-    'prediction': multiclass_prediction,
+    'model_type': 'multiclass_classification',
     'final_activation_and_cost': cost_functions.SoftmaxCrossEntropy()
 }
 
 """Linear Regression Models"""
 
 mse_linear_regression_LDF_model = {
-    'check_inputs': check_inputs_no_constraints,
-    'prediction': linear_regression_prediction,
+    'model_type': 'linear_regression',
     'final_activation_and_cost': cost_functions.LinearMinimumSquareError()
 }
 
@@ -48,8 +39,8 @@ class LinearDiscriminantFunction(object):
         self.n_x = n_x
         self.n_y = n_y
 
-        self.check_inputs = model['check_inputs']
-        self.prediction = model['prediction']
+        self._set_model_helper(model['model_type'])
+
         self.faac = model['final_activation_and_cost']
 
         self._initialize_parameters()
@@ -73,7 +64,7 @@ class LinearDiscriminantFunction(object):
         """
         assert X.shape[0] == self.n_x, 'invalid input vector dimension: %d. Expected: %d' % (X.shape[0], self.n_x)
         assert Y.shape[0] == self.n_y, 'invalid output vector dimension: %d. Expected: %d' % (Y.shape[0], self.n_y)
-        self.check_inputs(X, Y)
+        self._check_inputs(X, Y)
 
         costs = []
 
@@ -108,11 +99,10 @@ class LinearDiscriminantFunction(object):
         Z = self.forward_propagate(X, self.params['W'], self.params['b'])
         A = self.faac.final_activation(Z)
 
-        Y_prediction = self.prediction(A)
+        Y_prediction = self._prediction(A)
 
         return Y_prediction, A
 
-    #TODO address this in a more general way
     def score(self, X, Y):
         """
         prediction percent correct
@@ -120,17 +110,29 @@ class LinearDiscriminantFunction(object):
         :param Y:
         :return:
         """
-        assert X.shape[0] == self.n_x, 'invalid input vector dimension: %d. Expected: %d' % (X.shape[0], self.n_x)
-        assert Y.shape[0] == self.n_y, 'invalid output vector dimension: %d. Expected: %d' % (Y.shape[0], self.n_y)
-        self.check_inputs(X, Y)
+        assert X.shape[0] == self.n_x, 'invalid input vector dimension: %d, Expected: %d' % (X.shape[0], self.n_x)
 
         Y_prediction, _ = self.predict(X)
 
-        correct = np.sum(np.equal(Y_prediction, Y))
-
-        return correct / Y.shape[1]
+        return self._score(Y, Y_prediction)
 
     """Private Methods"""
+
+    def _set_model_helper(self, model_type):
+        # set the model helper
+        valid_model_types = []
+        for model_helper_name in model_helpers.__all__:
+            ModelHelper = getattr(model_helpers, model_helper_name)
+            if ModelHelper.model_type == model_type:
+                self.model_helper = ModelHelper()
+            else:
+                valid_model_types.append(ModelHelper.model_type)
+        assert hasattr(self, 'model_helper'), 'invalid model_type: %s\n  valid model types: %s' \
+                                              % (model_type, str(valid_model_types))
+
+        self._check_inputs = self.model_helper.check_inputs
+        self._prediction = self.model_helper.prediction
+        self._score = self.model_helper.score
 
     def _initialize_parameters(self):
         W = np.zeros((self.n_y, self.n_x))

@@ -8,8 +8,6 @@ import numpy as np
 import scipy
 from scipy import ndimage
 
-"""Data Preparation"""
-
 # local imports
 import os, sys
 # print(os.path.abspath(os.path.dirname(sys.argv[0])))
@@ -17,6 +15,8 @@ sys.path.append(os.path.split(os.path.abspath(os.path.dirname(sys.argv[0])))[0])
 from deep_learning.linear_disciminant_function import *
 from deep_learning.neural_network import *
 from deep_learning import activation_functions
+
+"""Data Preparation"""
 
 def load_dataset():
     train_dataset = h5py.File('data/train_catvnoncat.h5', "r")
@@ -85,6 +85,12 @@ plt.figure()
 learning_rate = 0.01
 num_iterations = 1000
 
+#TODO note, these instantiated cost function classes are shared by anything that uses this dictionary
+perceptron_LDF_model = {
+    'model_type': 'binary_classification',
+    'final_activation_and_cost': cost_functions.SigmoidPerceptron()
+}
+
 clf = LinearDiscriminantFunction(n_x, n_y, perceptron_LDF_model)
 label = 'PerceptronLDF'
 train_and_plot(clf, label, train_set_x, train_set_y, test_set_x, test_set_y, num_iterations, learning_rate)
@@ -94,27 +100,10 @@ label = 'LogRegLDF'
 train_and_plot(clf, label, train_set_x, train_set_y, test_set_x, test_set_y, num_iterations, learning_rate)
 
 # layer_dims = [n_x, n_y]
-# clf = NeuralNetwork(layer_dims, logistic_regression_NN_model)
-# label = 'LogRegLDF'
-# # train_and_plot(clf, label, train_set_x, train_set_y, test_set_x, test_set_y, num_iterations, learning_rate)
-#
-# layer_dims = [n_x, n_y]
-# clf = NeuralNetwork(layer_dims, perceptron_NN_model)
-# label = 'PerceptronLDF'
-# train_and_plot(clf, label, train_set_x, train_set_y, test_set_x, test_set_y, num_iterations, learning_rate)
-
-
-
-nn_model = {
-    'check_inputs': check_inputs_binary_classification,
-    'prediction': binary_classification_prediction,
-    'final_activation_and_cost': cost_functions.SigmoidCrossEntropy(),
-    'hidden_activation': activation_functions.ReluActivation()
-}
 layer_dims = [n_x, 12, 5, n_y]
-clf = NeuralNetwork(layer_dims, nn_model)
-label = 'LogRegNN'
-# train_and_plot(clf, label, train_set_x, train_set_y, test_set_x, test_set_y, num_iterations, learning_rate)
+clf = NeuralNetwork(layer_dims, logistic_regression_NN_model)
+label = 'LogRegNN ' + '-'.join(str(s) for s in layer_dims[1:-1])
+train_and_plot(clf, label, train_set_x, train_set_y, test_set_x, test_set_y, num_iterations, learning_rate)
 
 plt.title(('Comparison of Classifiers'))
 plt.legend(loc='best')

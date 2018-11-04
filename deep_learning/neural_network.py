@@ -5,61 +5,47 @@ Neural Network
 from __future__ import division
 import numpy as np
 from utils import *
-from model_helpers import *
+import model_helpers
 import activation_functions
 import cost_functions
 
 # __all__ = ['NeuralNetwork']
 
 example_model = {
-    'check_inputs': check_inputs_binary_classification,
-    'prediction': binary_classification_prediction,
-    'final_activation_and_cost': cost_functions.SigmoidCrossEntropy(),
-    # neural network specific model parameters
-    'hidden_activation': activation_functions.LeakyReluActivation(leak=0.01)
+    'model_type': 'binary_classification',
+    'hidden_activation': activation_functions.LeakyReluActivation(leak=0.01),
+    'final_activation_and_cost': cost_functions.SigmoidCrossEntropy()
 }
 
 ldf_example_model = {
-    'check_inputs': check_inputs_binary_classification,
-    'prediction': binary_classification_prediction,
-    'final_activation_and_cost': cost_functions.SigmoidCrossEntropy()
+    'model_type': 'binary_classification',
     # can assign 'hidden_activation' to None, but not necessary
+    'final_activation_and_cost': cost_functions.SigmoidCrossEntropy()
 }
 
 """Binary Classification Models"""
 
 logistic_regression_NN_model = {
-    'check_inputs': check_inputs_binary_classification,
-    'prediction': binary_classification_prediction,
-    'final_activation_and_cost': cost_functions.SigmoidCrossEntropy(),
-    'hidden_activation': activation_functions.ReluActivation()
-}
-
-perceptron_NN_model = {
-    'check_inputs': check_inputs_binary_classification,
-    'prediction': binary_classification_prediction,
-    'final_activation_and_cost': cost_functions.SigmoidPerceptron(),
-    'hidden_activation': activation_functions.ReluActivation()
+    'model_type': 'binary_classification',
+    'hidden_activation': activation_functions.ReluActivation(),
+    'final_activation_and_cost': cost_functions.SigmoidCrossEntropy()
 }
 
 """Multi-class Classification Models"""
 
 softmax_regression_NN_model = {
-    'check_inputs': check_inputs_multiclass_classification,
-    'prediction': multiclass_prediction,
-    'final_activation_and_cost': cost_functions.SoftmaxCrossEntropy(),
-    'hidden_activation': activation_functions.ReluActivation()
+    'model_type': 'multiclass_classification',
+    'hidden_activation': activation_functions.ReluActivation(),
+    'final_activation_and_cost': cost_functions.SoftmaxCrossEntropy()
 }
 
 """Linear Regression Models"""
 
 mse_linear_regression_NN_model = {
-    'check_inputs': check_inputs_no_constraints,
-    'prediction': linear_regression_prediction,
-    'final_activation_and_cost': cost_functions.LinearMinimumSquareError(),
-    'hidden_activation': activation_functions.ReluActivation()
+    'model_type': 'linear_regression',
+    'hidden_activation': activation_functions.ReluActivation(),
+    'final_activation_and_cost': cost_functions.LinearMinimumSquareError()
 }
-
 
 class NeuralNetwork(object):
     """description..."""
@@ -78,8 +64,8 @@ class NeuralNetwork(object):
         """
         self.layer_dims = np.array(layer_dims).copy()
 
-        self.check_inputs = model['check_inputs']
-        self.prediction = model['prediction']
+        self._set_model_helper(model['model_type'])
+
         self.faac = model['final_activation_and_cost']
 
         if 'hidden_activation' in model.keys() and model['hidden_activation'] is not None:
@@ -118,6 +104,7 @@ class NeuralNetwork(object):
         Returns:
         costs -- list of all the costs computed during the optimization
         """
+        #TODO check inputs?
         costs = []
 
         for i in range(num_iterations):
@@ -157,26 +144,41 @@ class NeuralNetwork(object):
         AL = self.faac.final_activation(ZL)
 
         # Convert probabilities (A) to actual predictions
-        Y_prediction = self.prediction(AL)
+        Y_prediction = self._prediction(AL)
 
         return Y_prediction, AL
 
-    #TODO
     def score(self, X, Y):
         """
-        compute prediction accuracy
-        :param X: data of size (layer_dims[0], number of examples)
-        :param Y: labels of size (layer_dims[-1], number of examples)
-        :return: ratio of correct predictions / total predictions
+        prediction percent correct
+        :param X:
+        :param Y:
+        :return:
         """
-        assert Y.shape == (1, X.shape[1]), 'invalid input dimensions'
+        assert X.shape[0] == self.layer_dims[0], 'invalid input vector dimension: %d, Expected: %d' \
+                                                 % (X.shape[0], self.layer_dims[0])
 
         Y_prediction, _ = self.predict(X)
 
-        correct = np.sum(Y_prediction == Y)
-        return correct / Y.shape[1]
+        return self._score(Y, Y_prediction)
 
     """Private Methods"""
+
+    def _set_model_helper(self, model_type):
+        # set the model helper
+        valid_model_types = []
+        for model_helper_name in model_helpers.__all__:
+            ModelHelper = getattr(model_helpers, model_helper_name)
+            if ModelHelper.model_type == model_type:
+                self.model_helper = ModelHelper()
+            else:
+                valid_model_types.append(ModelHelper.model_type)
+        assert hasattr(self, 'model_helper'), 'invalid model_type: %s\n  valid model types: %s' \
+                                              % (model_type, str(valid_model_types))
+
+        self._check_inputs = self.model_helper.check_inputs
+        self._prediction = self.model_helper.prediction
+        self._score = self.model_helper.score
 
     def _initialize_parameters(self):
         """
@@ -318,8 +320,7 @@ class NeuralNetwork(object):
         db = 1 / m * np.sum(dZ, axis=1, keepdims=True)
         dA_prev = np.dot(W.T, dZ)
 
-        #TODO debug this
-        assert dW.shape == W.shape, 'L: ' + str(layer) + ' W:' + str(W.shape) + ' dZ:' + str(dZ.shape) + ' A_Prev:' + str(A_prev.shape)
+        assert dW.shape == W.shape
         assert db.shape == b.shape
         assert dA_prev.shape == A_prev.shape
 
@@ -393,7 +394,7 @@ class NeuralNetwork(object):
 
         return gradients
 
-    #TODO
+    #TODO regularization
     @staticmethod
     def _backward_propagate_with_regularization(AL, Y, L, cache, lambd, params, keep_prob,
                                                 hidden_activation, final_activation):
