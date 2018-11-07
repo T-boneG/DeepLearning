@@ -6,9 +6,7 @@ This class is actually superfluous because the same thing could be made using
 the NeuralNetwork class with no hidden units, however it is still here for reference
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 import numpy as np
 
 from . import model_helpers, cost_functions

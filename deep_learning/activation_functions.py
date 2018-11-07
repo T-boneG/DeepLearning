@@ -10,9 +10,7 @@ This file contains a collection of classes that inherit from an abstract _Hidden
 Running this file as __main__ plots the activation functions (forward) and their derivatives (backward)
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 from abc import ABCMeta, abstractmethod
 import numpy as np
 

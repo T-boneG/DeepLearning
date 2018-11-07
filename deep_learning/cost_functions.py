@@ -14,9 +14,7 @@ a collection of Cost Function classes that inherit from a common _FinalActivatio
       dZL - the gradients w.r.t. the final linear activation ZL
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 from abc import ABCMeta, abstractmethod
 import numpy as np
 import warnings

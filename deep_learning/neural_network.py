@@ -3,10 +3,11 @@ neural_network.py
 Neural Network machine learning algorithm
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
+import os
 import numpy as np
+import pandas as pd
+import six
 
 from . import model_helpers, activation_functions, cost_functions
 
@@ -69,6 +70,8 @@ class NeuralNetwork(object):
         """
         self.layer_dims = np.array(layer_dims).copy()
 
+        self._model = model
+
         self._set_model_helper(model['model_type'])
 
         if 'hidden_activation' in model.keys() and model['hidden_activation'] is not None:
@@ -129,7 +132,7 @@ class NeuralNetwork(object):
 
             costs.append(cost)
 
-            if print_cost and (i % 1000 == 0):
+            if print_cost and (i % 50 == 0):
                 print('%5d: %7.4f' % (i, cost))
 
         return costs
@@ -170,6 +173,75 @@ class NeuralNetwork(object):
         Y_prediction, _ = self.predict(X)
 
         return self._score(Y, Y_prediction)
+
+    def save(self, filepath, overwrite=True):
+        """
+        save the NN's parameters to an HDF5 store
+
+        :param filepath: path to the HDF5 store
+        :param overwrite: Whether we should overwrite any existing
+            model at the target location, or instead
+            ask the user with a manual prompt.
+        """
+        assert filepath.endswith('.h5'), 'incorrect file suffix: .%s, should be .h5' % filepath.split('.')[-1]
+
+        # If file exists and should not be overwritten.
+        if not overwrite and os.path.isfile(filepath):
+            proceed = _ask_to_proceed_with_overwrite(filepath)
+            if not proceed:
+                return
+
+        with pd.HDFStore(filepath, mode='w') as store:
+            for key, value in self.get_parameters().items():
+                store[key] = pd.DataFrame(value)
+
+    def load(self, filepath):
+        """
+        load the NN's parameters from an HDF5 store created using NeuralNetwork.save(...)
+
+        :param filepath: path to the HDF5 store
+        """
+        assert filepath.endswith('.h5'), 'incorrect file suffix: .%s, should be .h5' % filepath.split('.')[-1]
+
+        with pd.HDFStore(filepath, mode='r') as store:
+            # print(store.info())
+
+            for key in self.parameters.keys():
+                assert key in store, 'parameter not found in the load file'
+
+                parameter = store[key].get_values()
+                assert parameter.shape == self.parameters[key].shape, 'inconsistent shape between this ' \
+                                                                      'NeuralNetwork\'s parameters and the load file'
+
+                self.parameters[key] = parameter
+
+    def summary(self):
+        """
+
+        :return: a summary string of the network
+        """
+        s = ''
+
+        for key, value in self._model.items():
+            s = '\n'.join([s, '%s: %s' % (key, value)])
+
+        s = '\n'.join([s, 'number of layers: %d' % self.get_num_layers()])
+
+        layers = [{} for _ in range(self.get_num_layers())]
+
+        for key, value in self.parameters.items():
+            _, layer_number = _split_trailing_numbers(key)
+            layers[layer_number-1][key] = value
+
+        for i, cur_layer in enumerate(layers):
+            cur_keys = cur_layer.keys()
+            cur_keys.sort()
+
+            s = '\n'.join([s, 'Layer %d:' % (i+1)])
+            for key in cur_keys:
+                s = '\n'.join([s, '\t%s - %s' % (key, cur_layer[key].shape)])
+
+        return s
 
     """Private Methods"""
 
@@ -420,7 +492,6 @@ class NeuralNetwork(object):
     #
     #     return gradients
 
-
     def _propagate(self, X, Y):
         """
         propagate one full pass of gradient descent:
@@ -438,3 +509,35 @@ class NeuralNetwork(object):
         grads = self._backward_propagate(dZL)
 
         return grads, cost
+
+def _split_trailing_numbers(s):
+    """
+
+    :param s: a string
+    :return:
+        head - the string with the trailing integer removed
+        tail - the trailing numbers
+    """
+    head = s.rstrip('0123456789')
+    tail = int(s[len(head):])
+
+    return head, tail
+
+def _ask_to_proceed_with_overwrite(filepath):
+  """Produces a prompt asking about overwriting a file.
+
+  Arguments:
+      filepath: the path to the file to be overwritten.
+
+  Returns:
+      True if we can proceed with overwrite, False otherwise.
+  """
+  overwrite = six.moves.input('[WARNING] %s already exists - overwrite? '
+                              '[y/n]' % (filepath)).strip().lower()
+  while overwrite not in ('y', 'n'):
+    overwrite = six.moves.input('Enter "y" (overwrite) or "n" '
+                                '(cancel).').strip().lower()
+  if overwrite == 'n':
+    return False
+  print('[TIP] Next time specify overwrite=True!')
+  return True

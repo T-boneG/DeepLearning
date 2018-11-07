@@ -2,9 +2,7 @@
 utils.py - Utility functions
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 import numpy as np
 
 __all__ = ['stable_log', 'sigmoid', 'softmax', 'one_hot', 'one_hot_inverse']
