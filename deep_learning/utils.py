@@ -5,7 +5,7 @@ utils.py - Utility functions
 from __future__ import absolute_import, division, print_function
 import numpy as np
 
-__all__ = ['stable_log', 'sigmoid', 'softmax', 'one_hot', 'one_hot_inverse']
+__all__ = ['stable_log', 'sigmoid', 'softmax', 'one_hot', 'one_hot_inverse', 'random_mini_batches']
 
 def stable_log(x):
     """
@@ -51,3 +51,27 @@ def one_hot_inverse(one_hot_matrix):
     Inverse a one-hot matrix to a vector of integer class labels
     """
     return np.argmax(one_hot_matrix, axis=0)
+
+def random_mini_batches(X, Y, batch_size):
+    """
+    Split the training data into random minibatches
+    :param X: input data of shape (input dim, number of samples)
+    :param Y: output data of shape (output dim, number of samples
+    :param batch_size:
+    :return:
+        minibatches: a list of minibatch tuples where each tuple is (minibatch_X, minibatch_Y)
+        num_minibatches: the number of total minibatches
+    """
+    m = X.shape[1]
+
+    num_minibatches = int(np.ceil(m / batch_size))
+
+    # shuffle
+    random_permutation = np.random.permutation(m)
+    X_shuffled, Y_shuffled = (A[:, random_permutation] for A in (X, Y))
+
+    minibatches = [
+        (X_shuffled[:, i * batch_size:(i + 1) * batch_size], Y_shuffled[:, i * batch_size:(i + 1) * batch_size])
+        for i in range(num_minibatches)]
+
+    return minibatches, num_minibatches

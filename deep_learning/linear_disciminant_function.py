@@ -9,6 +9,7 @@ the NeuralNetwork class with no hidden units, however it is still here for refer
 from __future__ import absolute_import, division, print_function
 import numpy as np
 
+from .utils import random_mini_batches
 from . import model_helpers, cost_functions
 
 __all__ = ['LinearDiscriminantFunction']
@@ -69,41 +70,48 @@ class LinearDiscriminantFunction(object):
     def get_parameters(self):
         return self.parameters
 
-    # TODO implement batch processing
-    def fit(self, X, Y, num_iterations, learning_rate, print_cost=False):
+    def fit(self, X, Y, learning_rate, num_epochs, batch_size=32, print_cost=False):
         """
         This function optimizes W and b by running a gradient descent algorithm
 
         :param X: data of shape (n_x, number of examples)
         :param Y: labels of shape (n_y, number of examples)
-        :param num_iterations: number of iterations of the optimization loop
         :param learning_rate: learning rate of the gradient descent update rule
+        :param num_epochs: number of iterations of the optimization loop
+        :param batch_size: size of each processing batch
         :param print_cost: boolean
 
         :return: the costs per iteration as a list (use to plot a learning curve)
         """
-        assert num_iterations >= 0
         assert learning_rate > 0
+        assert num_epochs >= 0
+        assert batch_size >= 0
         assert X.shape[0] == self.n_x, 'invalid input vector dimension: %d, expected: %d' % (X.shape[0], self.n_x)
         assert Y.shape[0] == self.n_y, 'invalid output vector dimension: %d, expected: %d' % (Y.shape[0], self.n_y)
         self._check_inputs(X, Y)
 
-        costs = []
+        epoch_costs = []
 
-        for i in range(num_iterations):
-            # cost and gradient calculation
-            gradients, cost = self._propagate(X, Y)
+        minibatches, num_minibatches = random_mini_batches(X, Y, batch_size=batch_size)
 
-            # update rule
-            self.parameters['W'] = self.parameters['W'] - learning_rate * gradients['dW']
-            self.parameters['b'] = self.parameters['b'] - learning_rate * gradients['db']
+        for i in range(num_epochs):
+            epoch_cost = 0
 
-            costs.append(cost)
+            for X_minibatch, Y_minibatch in minibatches:
+                gradients, minibatch_cost = self._propagate(X_minibatch, Y_minibatch)
 
-            if print_cost and (i % 1000 == 0):
-                print('%5d: %7.4f' % (i, cost))
+                epoch_cost += minibatch_cost / num_minibatches
 
-        return costs
+                # update rule
+                self.parameters['W'] = self.parameters['W'] - learning_rate * gradients['dW']
+                self.parameters['b'] = self.parameters['b'] - learning_rate * gradients['db']
+
+            epoch_costs.append(epoch_cost)
+
+            if print_cost and (i % 1 == 0):
+                print('%5d: %7.4f' % (i, epoch_cost))
+
+        return epoch_costs
 
     def predict(self, X):
         """

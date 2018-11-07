@@ -67,7 +67,7 @@ n_y = 1
 
 def train_and_plot(clf, label, train_set_x, train_set_y, test_set_x, test_set_y, num_iterations, learning_rate):
     print('training...')
-    costs = clf.fit(train_set_x, train_set_y, num_iterations=num_iterations, learning_rate=learning_rate)
+    costs = clf.fit(train_set_x, train_set_y, learning_rate=learning_rate, num_epochs=num_iterations, print_cost=False)
 
     train_accuracy = clf.score(train_set_x, train_set_y)
     test_accuracy = clf.score(test_set_x, test_set_y)

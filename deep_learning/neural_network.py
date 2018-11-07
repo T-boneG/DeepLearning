@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import six
 
+from .utils import random_mini_batches
 from . import model_helpers, activation_functions, cost_functions
 
 __all__ = ['NeuralNetwork']
@@ -98,44 +99,53 @@ class NeuralNetwork(object):
         """Number of layers"""
         return len(self.layer_dims) - 1
 
-    def fit(self, X, Y, num_iterations, learning_rate, print_cost=False):
+    def fit(self, X, Y, learning_rate, num_epochs, batch_size=32, print_cost=False):
         """
         This function optimizes the model parameters by running a gradient descent algorithm
 
         :param X: data of shape (n_x, number of examples)
         :param Y: labels of shape (n_y, number of examples)
-        :param num_iterations: number of iterations of the optimization loop
         :param learning_rate: learning rate of the gradient descent update rule
+        :param num_epochs: number of iterations of the optimization loop
+        :param batch_size: size of each processing batch
         :param print_cost: boolean
 
         :return: the costs per iteration as a list (use to plot a learning curve)
         """
-        assert num_iterations >= 0
         assert learning_rate > 0
+        assert num_epochs >= 0
+        assert batch_size >= 0
         assert X.shape[0] == self.layer_dims[0], 'invalid input vector dimension: %d, expected: %d' \
                                                  % (X.shape[0], self.layer_dims[0])
         assert Y.shape[0] == self.layer_dims[-1], 'invalid output vector dimension: %d, expected: %d' \
                                                   % (Y.shape[0], self.layer_dims[-1])
         self._check_inputs(X, Y)
 
-        costs = []
+        epoch_costs = []
 
-        for i in range(num_iterations):
-            grads, cost = self._propagate(X, Y)
+        minibatches, num_minibatches = random_mini_batches(X, Y, batch_size=batch_size)
 
-            # update rule for each parameter
-            for l in range(self.get_num_layers()):
-                self.parameters['W' + str(l + 1)] = self.parameters['W' + str(l + 1)] \
-                                                    - learning_rate * grads['dW' + str(l + 1)]
-                self.parameters['b' + str(l + 1)] = self.parameters['b' + str(l + 1)] \
-                                                    - learning_rate * grads['db' + str(l + 1)]
+        for i in range(num_epochs):
+            epoch_cost = 0
 
-            costs.append(cost)
+            for X_minibatch, Y_minibatch in minibatches:
+                gradients, minibatch_cost = self._propagate(X_minibatch, Y_minibatch)
 
-            if print_cost and (i % 50 == 0):
-                print('%5d: %7.4f' % (i, cost))
+                epoch_cost += minibatch_cost / num_minibatches
 
-        return costs
+                # update rule for each parameter
+                for l in range(self.get_num_layers()):
+                    self.parameters['W' + str(l + 1)] = self.parameters['W' + str(l + 1)] \
+                                                        - learning_rate * gradients['dW' + str(l + 1)]
+                    self.parameters['b' + str(l + 1)] = self.parameters['b' + str(l + 1)] \
+                                                        - learning_rate * gradients['db' + str(l + 1)]
+
+            epoch_costs.append(epoch_cost)
+
+            if print_cost and (i % 1 == 0):
+                print('%5d: %7.4f' % (i, epoch_cost))
+
+        return epoch_costs
 
     def predict(self, X):
         """

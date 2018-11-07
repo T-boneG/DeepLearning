@@ -14,12 +14,12 @@ import matplotlib.pyplot as plt
 
 from deep_learning import activation_functions, cost_functions
 from deep_learning.neural_network import NeuralNetwork
-from deep_learning.utils import one_hot, one_hot_inverse
+from deep_learning.utils import one_hot
 
 """quick settings toggle"""
 
-load_saved_model = False
-# load_saved_model = True
+# load_saved_model = False
+load_saved_model = True
 
 m_train = 1000
 # m_train = -1
@@ -27,7 +27,7 @@ m_train = 1000
 learning_rate = 0.001
 
 BATCH_SIZE = 32
-NUM_EPOCHS = 1000
+NUM_EPOCHS = 5
 
 """preparation stuff"""
 
@@ -65,16 +65,16 @@ model = NeuralNetwork(layer_dims, model_specs)
 if load_saved_model:
     model.load(saved_model_path)
 
+    print(model.summary())
+
     accuracy = model.score(x_train, y_train)
     print('Train Accuracy: %4.2f%%' % (100 * accuracy))
     accuracy = model.score(x_test, y_test)
     print('Test Accuracy:  %4.2f%%' % (100 * accuracy))
 
-    print(model.summary())
-
 else:
     costs = model.fit(x_train, y_train,
-                      num_iterations=NUM_EPOCHS,
+                      num_epochs=NUM_EPOCHS,
                       learning_rate=learning_rate,
                       print_cost=True)
 

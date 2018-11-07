@@ -51,7 +51,7 @@ test_set_y = None
 """Train a linear classifier"""
 
 learning_rate = 0.1
-num_iterations = 1000
+num_iterations = 100
 # num_iterations = 1
 
 n_x = train_set_x.shape[0]
@@ -64,7 +64,7 @@ mse_linear_regression_LDF_model = {
 }
 clf = LinearDiscriminantFunction(n_x, n_y, mse_linear_regression_LDF_model)
 tic = time.time()
-costs = clf.fit(train_set_x, train_set_y, num_iterations, learning_rate)
+costs = clf.fit(train_set_x, train_set_y, learning_rate=learning_rate, num_epochs=num_iterations)
 print('time: %fs' % (time.time() - tic))
 plt.plot(np.squeeze(costs), label='LDF')
 W = clf.get_parameters()['W']
@@ -79,7 +79,7 @@ mse_linear_regression_NN_model = {
 }
 clf = NeuralNetwork(layer_dims, mse_linear_regression_NN_model)
 tic = time.time()
-costs = clf.fit(train_set_x, train_set_y, num_iterations, learning_rate)
+costs = clf.fit(train_set_x, train_set_y, learning_rate=learning_rate, num_epochs=num_iterations)
 print('time: %fs' % (time.time() - tic))
 plt.plot(np.squeeze(costs), label='linearNN')
 W = clf.get_parameters()['W1']
@@ -89,7 +89,7 @@ print('training wide NN...')
 layer_dims = [n_x, 512, n_y]
 clf = NeuralNetwork(layer_dims, mse_linear_regression_NN_model)
 tic = time.time()
-costs = clf.fit(train_set_x, train_set_y, num_iterations, learning_rate)
+costs = clf.fit(train_set_x, train_set_y, learning_rate=learning_rate, num_epochs=num_iterations)
 print('time: %fs' % (time.time() - tic))
 plt.plot(np.squeeze(costs), label='wideNN')
 
@@ -97,7 +97,7 @@ print('training deep NN...')
 layer_dims = [n_x, 128, 128, 128, 128, n_y]
 clf = NeuralNetwork(layer_dims, mse_linear_regression_NN_model)
 tic = time.time()
-costs = clf.fit(train_set_x, train_set_y, num_iterations, learning_rate)
+costs = clf.fit(train_set_x, train_set_y, learning_rate=learning_rate, num_epochs=num_iterations)
 print('time: %fs' % (time.time() - tic))
 plt.plot(np.squeeze(costs), label='deepNN')
 
@@ -105,7 +105,7 @@ print('training best? NN...')
 layer_dims = [n_x, 128, n_y]
 clf = NeuralNetwork(layer_dims, mse_linear_regression_NN_model)
 tic = time.time()
-costs = clf.fit(train_set_x, train_set_y, num_iterations, learning_rate)
+costs = clf.fit(train_set_x, train_set_y, learning_rate=learning_rate, num_epochs=num_iterations)
 print('time: %fs' % (time.time() - tic))
 plt.plot(np.squeeze(costs), label='NN')
 
