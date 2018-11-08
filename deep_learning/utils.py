@@ -1,11 +1,14 @@
+#!/usr/bin/env python
 """
 utils.py - Utility functions
 """
 
 from __future__ import absolute_import, division, print_function
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 
-__all__ = ['stable_log', 'sigmoid', 'softmax', 'one_hot', 'one_hot_inverse', 'random_mini_batches']
+__all__ = ['stable_log', 'sigmoid', 'softmax', 'one_hot', 'one_hot_inverse', 'random_mini_batches', 'explore_data']
 
 def stable_log(x):
     """
@@ -75,3 +78,47 @@ def random_mini_batches(X, Y, batch_size):
         for i in range(num_minibatches)]
 
     return minibatches, num_minibatches
+
+def explore_data(*args):
+    """
+    print out information and display a plot of the data distributions
+    shows the input dimension and the number of data samples per class label
+
+    :param args: arbitrary number of (X, Y) tuples for train, validation, test, etc.
+    """
+    def explore_single_dataset(X, Y, num_datasets, set_number):
+        # acquire information
+        m = X.shape[0]
+
+        class_labels = np.unique(Y)
+        class_labels.sort()
+        class_counts = np.zeros(class_labels.shape)
+
+        for i, class_label in enumerate(class_labels):
+            class_counts[i] = np.sum(np.equal(Y, class_label))
+
+        # print information
+        print('dataset size: %d' % m)
+        for i, class_label in enumerate(class_labels):
+            percent_of_set = 100 * class_counts[i] / m
+            print('label: %3d - %5.2f%%  %5d/%d' % (class_label, percent_of_set, class_counts[i], m))
+
+        # plot information
+        ax = plt.subplot(num_datasets, 1, set_number)
+        ax.bar(class_labels, class_counts)
+        ax.set_ylabel('count')
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        ax2 = ax.twinx()
+        ax2.bar(class_labels, 100 * class_counts / m)
+        ax2.set_ylabel('percent')
+        # ax2.grid(axis='y')
+
+    for i, (X, Y) in enumerate(args):
+        explore_single_dataset(X, Y, len(args), i+1)
+
+        if i == 0:
+            input_dimension = np.product(X.shape[1::])
+            print('input  dimension: %d' % input_dimension)
+            plt.title('input  dimension: %d' % input_dimension)
+
+    plt.show()

@@ -12,10 +12,10 @@ TensorFlow & Keras with Eager Execution
 """
 from __future__ import absolute_import, division, print_function
 
+import os, sys
 import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
-import os, sys
 
 from tensorflow.keras import layers
 from tensorflow.keras.models import Sequential, load_model

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 model_helpers.py
 Model Helpers are classes that inherit from an abstract _ModelHelper base class in order to support the same interface

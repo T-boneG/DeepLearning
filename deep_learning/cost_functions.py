@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 cost_functions.py
 a collection of Cost Function classes that inherit from a common _FinalActivationAndCost abstract base class.

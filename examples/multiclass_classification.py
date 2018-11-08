@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+"""
+Example of Multi-class classification
+"""
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
@@ -7,7 +11,7 @@ mnist = tf.keras.datasets.mnist
 import os, sys
 # print(os.path.abspath(os.path.dirname(sys.argv[0])))
 sys.path.append(os.path.split(os.path.abspath(os.path.dirname(sys.argv[0])))[0])
-from deep_learning.utils import one_hot, one_hot_inverse
+from deep_learning.utils import one_hot, one_hot_inverse, explore_data
 from deep_learning.linear_disciminant_function import LinearDiscriminantFunction
 from deep_learning.neural_network import NeuralNetwork
 from deep_learning import cost_functions, activation_functions
@@ -34,6 +38,10 @@ def view_data(x_train, y_train):
         plt.title('Y label: %s' % str(y_train[index]))
     plt.show()
 # view_data(x_train, y_train)
+
+explore_data((x_train, y_train), (x_test, y_test))
+
+sys.exit()
 
 """preprocess data"""
 

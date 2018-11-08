@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 activation_functions.py
 Activation Functions that are typically used as hidden activations

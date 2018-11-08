@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 linear_discriminant_function.py
 Linear Discriminant Function machine learning algorithm

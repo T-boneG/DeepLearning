@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Example of Binary Classification
 """
@@ -12,6 +13,7 @@ from scipy import ndimage
 import os, sys
 # print(os.path.abspath(os.path.dirname(sys.argv[0])))
 sys.path.append(os.path.split(os.path.abspath(os.path.dirname(sys.argv[0])))[0])
+from deep_learning.utils import explore_data
 from deep_learning.linear_disciminant_function import LinearDiscriminantFunction
 from deep_learning.neural_network import NeuralNetwork
 from deep_learning import activation_functions, cost_functions
@@ -36,6 +38,8 @@ def load_dataset():
 
 # Loading the data (cat/non-cat)
 train_set_x_orig, train_set_y, test_set_x_orig, test_set_y, classes = load_dataset()
+
+explore_data((train_set_x_orig, train_set_y), (test_set_x_orig, test_set_y))
 
 def show_example_image(index):
     assert(index >= 0 and index <= len(train_set_x_orig))

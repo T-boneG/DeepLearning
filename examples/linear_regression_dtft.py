@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Idea to try learning a DTFT using a linear regression and/or NN
 
