@@ -117,8 +117,10 @@ def explore_data(*args):
         explore_single_dataset(X, Y, len(args), i+1)
 
         if i == 0:
-            input_dimension = np.product(X.shape[1::])
-            print('input  dimension: %d' % input_dimension)
-            plt.title('input  dimension: %d' % input_dimension)
+            input_shape = X.shape[1::]
+            input_dimension = np.product(input_shape)
+            s = 'input shape: %s = %d' % (str(input_shape), input_dimension)
+            print(s)
+            plt.title(s)
 
     plt.show()
