@@ -1,34 +1,10 @@
 Goals:
 
-make deep_learning a consolidated package (module)
-make it object oriented
-write some nice examples in a separate examples directory that imports this deep_learning package
+#TODO make deep_learning a consolidated package (module)
+https://python-packaging.readthedocs.io/en/latest/minimal.html
 
-Continue:
--create examples for: multi-class and linear regression
--fix perceptron
+#TODO add a jupyter notebook
 
--minibatch
--L2 regularization and dropout
--implement tensorflow versions of LDF and NN
+#TODO clean up the code
 
--gradient checking
--momentum
--adam (same as momentum but change values of beta1, beta2)
--learning rate decay
-
-
-
-gradient check:
-epsilon = 10 ** -7
-10 ** -7 (great!)
-10 ** -3 (worry!)
-
-Minibatch Gradient Descrent with Momentum
- - Common values for beta range from 0.8 to 0.999.
- - If you don't feel inclined to tune this, beta=0.9 is often a reasonable default.
- - TODO add default values and warning for weird values (and maybe option to suppress warnings)
-
-
-
-
+#

@@ -37,11 +37,9 @@ def view_data(x_train, y_train):
         plt.imshow(x_train[index,:], cmap='binary')
         plt.title('Y label: %s' % str(y_train[index]))
     plt.show()
-# view_data(x_train, y_train)
+view_data(x_train, y_train)
 
 explore_data((x_train, y_train), (x_test, y_test))
-
-sys.exit()
 
 """preprocess data"""
 
@@ -97,16 +95,3 @@ train_and_plot(clf, label, x_train, y_train, x_test, y_test, num_iterations, lea
 
 plt.legend(loc='best')
 plt.show()
-
-# model = tf.keras.models.Sequential([
-#   tf.keras.layers.Flatten(),
-#   tf.keras.layers.Dense(512, activation=tf.nn.relu),
-#   tf.keras.layers.Dropout(0.2),
-#   tf.keras.layers.Dense(10, activation=tf.nn.softmax)
-# ])
-# model.compile(optimizer='adam',
-#               loss='sparse_categorical_crossentropy',
-#               metrics=['accuracy'])
-#
-# model.fit(x_train, y_train, epochs=5)
-# model.evaluate(x_test, y_test)

@@ -3,12 +3,15 @@
 activation_functions.py
 Activation Functions that are typically used as hidden activations
 
-This file contains a collection of classes that inherit from an abstract _HiddenActivation class.
- Each class implements an activation function: forward(Z) and its respective backward function: backward(dA, Z) where:
+This file contains a collection of classes that inherit from an
+abstract _HiddenActivation class.
+ Each class implements an activation function: forward(Z) and its respective
+ backward function: backward(dA, Z) where:
   Z - final linear activation
   dA - the derivative of the cost w.r.t. A (the final activation)
 
-Running this file as __main__ plots the activation functions (forward) and their derivatives (backward)
+Running this file as __main__ plots the activation functions (forward) and
+their derivatives (backward)
 """
 
 from __future__ import absolute_import, division, print_function
@@ -17,10 +20,13 @@ import numpy as np
 
 from .utils import sigmoid
 
-__all__ = ['LinearActivation', 'SigmoidActivation', 'TanhActivation', 'ReluActivation', 'LeakyReluActivation']
+__all__ = ['LinearActivation', 'SigmoidActivation', 'TanhActivation',
+           'ReluActivation', 'LeakyReluActivation']
 
 class _HiddenActivation:
-    """Abstract class providing the structure for the hidden activation classes"""
+    """
+    Abstract class providing the structure for the hidden activation classes
+    """
 
     __metaclass__ = ABCMeta
 

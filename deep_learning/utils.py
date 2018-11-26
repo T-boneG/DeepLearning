@@ -8,7 +8,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 
-__all__ = ['stable_log', 'sigmoid', 'softmax', 'one_hot', 'one_hot_inverse', 'random_mini_batches', 'explore_data']
+__all__ = ['stable_log', 'sigmoid', 'softmax', 'one_hot', 'one_hot_inverse',
+           'random_mini_batches', 'explore_data']
 
 def stable_log(x):
     """
@@ -23,7 +24,8 @@ def sigmoid(x):
 def softmax(Z, axis=0):
     """
 
-    :param Z: array of predictions of dimension (number of classes, number of samples)
+    :param Z: array of predictions of dimension
+              (number of classes, number of samples)
     :param axis: optional, should be 0 if Z is of the aforementioned structure
     :return: array of same dimension as Z
     """
@@ -62,7 +64,8 @@ def random_mini_batches(X, Y, batch_size):
     :param Y: output data of shape (output dim, number of samples
     :param batch_size:
     :return:
-        minibatches: a list of minibatch tuples where each tuple is (minibatch_X, minibatch_Y)
+        minibatches: a list of minibatch tuples where each tuple
+                     is (minibatch_X, minibatch_Y)
         num_minibatches: the number of total minibatches
     """
     m = X.shape[1]
@@ -74,7 +77,8 @@ def random_mini_batches(X, Y, batch_size):
     X_shuffled, Y_shuffled = (A[:, random_permutation] for A in (X, Y))
 
     minibatches = [
-        (X_shuffled[:, i * batch_size:(i + 1) * batch_size], Y_shuffled[:, i * batch_size:(i + 1) * batch_size])
+        (X_shuffled[:, i * batch_size:(i + 1) * batch_size],
+         Y_shuffled[:, i * batch_size:(i + 1) * batch_size])
         for i in range(num_minibatches)]
 
     return minibatches, num_minibatches
@@ -101,7 +105,8 @@ def explore_data(*args):
         print('dataset size: %d' % m)
         for i, class_label in enumerate(class_labels):
             percent_of_set = 100 * class_counts[i] / m
-            print('label: %3d - %5.2f%%  %5d/%d' % (class_label, percent_of_set, class_counts[i], m))
+            print('label: %3d - %5.2f%%  %5d/%d'
+                  % (class_label, percent_of_set, class_counts[i], m))
 
         # plot information
         ax = plt.subplot(num_datasets, 1, set_number)

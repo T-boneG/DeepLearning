@@ -4,7 +4,8 @@ linear_discriminant_function.py
 Linear Discriminant Function machine learning algorithm
 
 This class is actually superfluous because the same thing could be made using
-the NeuralNetwork class with no hidden units, however it is still here for reference
+the NeuralNetwork class with no hidden units, however it is still here for
+reference
 """
 
 from __future__ import absolute_import, division, print_function
@@ -41,8 +42,9 @@ class LinearDiscriminantFunction(object):
     """
     LinearDiscriminantFunction
 
-    This class is actually superfluous because the same thing could be made using
-    the NeuralNetwork class with no hidden units, however it is still here for reference
+    This class is actually superfluous because the same thing could be made
+    using the NeuralNetwork class with no hidden units, however it is still
+    here for reference
     """
 
     """Public Methods"""
@@ -54,24 +56,31 @@ class LinearDiscriminantFunction(object):
         :param n_y: dimension of output vector y
         :param model: dictionary with model details.
           required keys:
-            'model_type' - the type of task ('binary_classification', 'multiclass_classification', 'linear_regression')
-            'final_activation_and_cost' - the combination Final Activation and Cost function. refer to cost_functions.py
+            'model_type' - the type of task ('binary_classification',
+                                             'multiclass_classification',
+                                             'linear_regression')
+            'final_activation_and_cost' - the combination Final Activation
+                    and Cost function. refer to cost_functions.py
         """
         self.n_x = n_x
         self.n_y = n_y
 
         self._set_model_helper(model['model_type'])
 
-        assert isinstance(model['final_activation_and_cost'], cost_functions._FinalActivationAndCost)
-        self._final_activation = model['final_activation_and_cost'].final_activation
-        self._final_activation_and_cost = model['final_activation_and_cost'].final_activation_and_cost
+        assert isinstance(model['final_activation_and_cost'],
+                          cost_functions._FinalActivationAndCost)
+        self._final_activation = \
+            model['final_activation_and_cost'].final_activation
+        self._final_activation_and_cost = \
+            model['final_activation_and_cost'].final_activation_and_cost
 
         self._initialize_parameters()
 
     def get_parameters(self):
         return self.parameters
 
-    def fit(self, X, Y, learning_rate, num_epochs, batch_size=32, print_cost=False):
+    def fit(self, X, Y, learning_rate, num_epochs, batch_size=32,
+            print_cost=False):
         """
         This function optimizes W and b by running a gradient descent algorithm
 
@@ -82,18 +91,22 @@ class LinearDiscriminantFunction(object):
         :param batch_size: size of each processing batch
         :param print_cost: boolean
 
-        :return: the costs per iteration as a list (use to plot a learning curve)
+        :return: the costs per iteration as a list
+                 (use to plot a learning curve)
         """
         assert learning_rate > 0
         assert num_epochs >= 0
         assert batch_size >= 0
-        assert X.shape[0] == self.n_x, 'invalid input vector dimension: %d, expected: %d' % (X.shape[0], self.n_x)
-        assert Y.shape[0] == self.n_y, 'invalid output vector dimension: %d, expected: %d' % (Y.shape[0], self.n_y)
+        assert X.shape[0] == self.n_x, 'invalid input vector dimension: %d,' \
+                                       ' expected: %d' % (X.shape[0], self.n_x)
+        assert Y.shape[0] == self.n_y, 'invalid output vector dimension: %d,' \
+                                       ' expected: %d' % (Y.shape[0], self.n_y)
         self._check_inputs(X, Y)
 
         epoch_costs = []
 
-        minibatches, num_minibatches = random_mini_batches(X, Y, batch_size=batch_size)
+        minibatches, num_minibatches = \
+            random_mini_batches(X, Y, batch_size=batch_size)
 
         for i in range(num_epochs):
             epoch_cost = 0
@@ -104,8 +117,10 @@ class LinearDiscriminantFunction(object):
                 epoch_cost += minibatch_cost / num_minibatches
 
                 # update rule
-                self.parameters['W'] = self.parameters['W'] - learning_rate * gradients['dW']
-                self.parameters['b'] = self.parameters['b'] - learning_rate * gradients['db']
+                self.parameters['W'] = self.parameters['W'] \
+                                       - learning_rate * gradients['dW']
+                self.parameters['b'] = self.parameters['b'] \
+                                       - learning_rate * gradients['db']
 
             epoch_costs.append(epoch_cost)
 
@@ -125,9 +140,12 @@ class LinearDiscriminantFunction(object):
                 effectively the probabilities for classification tasks
                 the same as Y_prediction for regression tasks
         """
-        assert X.shape[0] == self.n_x, 'invalid input vector dimension: %d, expected: %d' % (X.shape[0], self.n_x)
+        assert X.shape[0] == self.n_x, 'invalid input vector dimension: %d, ' \
+                                       'expected: %d' % (X.shape[0], self.n_x)
 
-        Z = self.forward_propagate(X, self.parameters['W'], self.parameters['b'])
+        Z = self.forward_propagate(X,
+                                   self.parameters['W'],
+                                   self.parameters['b'])
         A = self._final_activation(Z)
 
         Y_prediction = self._prediction(A)
@@ -143,7 +161,8 @@ class LinearDiscriminantFunction(object):
         :return: percent correct
                    OR mean squared error
         """
-        assert X.shape[0] == self.n_x, 'invalid input vector dimension: %d, expected: %d' % (X.shape[0], self.n_x)
+        assert X.shape[0] == self.n_x, 'invalid input vector dimension: %d, ' \
+                                       'expected: %d' % (X.shape[0], self.n_x)
 
         Y_prediction, _ = self.predict(X)
 
@@ -153,7 +172,8 @@ class LinearDiscriminantFunction(object):
 
     def _set_model_helper(self, model_type):
         """
-        Acquire the _ModelHelper class corresponding to 'model_type' and instantiate as a class attribute
+        Acquire the _ModelHelper class corresponding to 'model_type' and
+        instantiate as a class attribute
 
         :param model_type: string (refer to model_helper.py for options)
         """
@@ -167,8 +187,9 @@ class LinearDiscriminantFunction(object):
             else:
                 valid_model_types.append(ModelHelper.model_type)
 
-        assert hasattr(self, 'model_helper'), 'invalid model_type: %s\n  valid model types: %s' \
-                                              % (model_type, str(valid_model_types))
+        assert hasattr(self, 'model_helper'), \
+            'invalid model_type: %s\n  valid model types: %s' \
+            % (model_type, str(valid_model_types))
 
         # assign class functions to model_helper functions
         self._check_inputs = self.model_helper.check_inputs
@@ -194,7 +215,9 @@ class LinearDiscriminantFunction(object):
         :param Y: output labels
         :return: gradients and cost
         """
-        Z = self.forward_propagate(X, self.parameters['W'], self.parameters['b'])
+        Z = self.forward_propagate(X,
+                                   self.parameters['W'],
+                                   self.parameters['b'])
 
         cost, A, dZ = self._final_activation_and_cost(Y, Z)
 
@@ -230,10 +253,12 @@ class LinearDiscriminantFunction(object):
     @staticmethod
     def linear_backward(X, dZ):
         """
-        back propagation from linear activation (Z) to weight matrix (W) and bias vector (b)
+        back propagation from linear activation (Z) to weight
+        matrix (W) and bias vector (b)
 
         :param X: data of shape (n_x, number of samples)
-        :param dZ: linear activation gradient matrix of shape (n_y, number of samples)
+        :param dZ: linear activation gradient matrix of shape
+                    (n_y, number of samples)
         :return: gradients (partial derivatives)
             dW: w.r.t. the weight matrix
             db: w.r.t. the bias vector
