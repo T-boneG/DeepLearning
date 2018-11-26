@@ -90,3 +90,8 @@ ENV/
 
 # Pycharm stuff
 .idea
+
+# DeepLearning
+ml_reference
+practice
+custom_estimators
